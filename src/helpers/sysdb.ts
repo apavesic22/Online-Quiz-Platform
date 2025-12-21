@@ -11,6 +11,7 @@ export const db: { connection: Database | null} = {
   connection: null
 };
 
+/*
 export async function openDb(): Promise<void> {
   db.connection = await open({
     filename: process.env.SYSDBFILE || './db/sysdb.sqlite3',
@@ -23,7 +24,6 @@ export async function openDb(): Promise<void> {
     await createSchemaAndData();
   }
 }
-
 export async function createSchemaAndData(): Promise<void> {
   const createUsersTable = `
     CREATE TABLE users (  
@@ -66,3 +66,4 @@ export function reloadUsers() {
     users.push(...loadedUsers);
   });
 }
+  */
