@@ -93,13 +93,142 @@ export const questionTypesTableDef = {
 export const quizDifficultiesTableDef = {
   name: "QUIZ_DIFFICULTIES",
   columns: {
-    id_quiz_difficulty: { type: "INTEGER", primaryKey: true, autoincrement: true },
+    id: { type: "INTEGER", primaryKey: true, autoincrement: true },
     difficulty: { type: "TEXT", notNull: true, unique: true },
   },
 };
 
 
+export const questionsTableDef = {
+  name: "QUESTIONS",
+  columns: {
+    question_id: { type: "INTEGER", primaryKey: true, autoincrement: true },
+    category_id: { type: "INTEGER", notNull: true },
+    question_type_id: { type: "INTEGER", notNull: true },
+    question_text: { type: "TEXT", notNull: true },
+    difficulty_id: { type: "INTEGER", notNull: true },
+  },
+  foreignKeys: [
+    { column: "category_id", references: "CATEGORIES(category_id)" },
+    { column: "question_type_id", references: "QUESTION_TYPES(id)" },
+    { column: "difficulty_id", references: "QUIZ_DIFFICULTIES(id)" }, 
+  ],
+};
 
+export const quizzesTableDef = {
+  name: "QUIZZES",
+  columns: {
+    quiz_id: { type: "INTEGER", primaryKey: true, autoincrement: true },
+    user_id: { type: "INTEGER", notNull: true }, 
+    category_id: { type: "INTEGER", notNull: true },
+    difficulty_id: { type: "INTEGER", notNull: true },
+
+    quiz_name: { type: "TEXT", notNull: true },
+    question_count: { type: "INTEGER", notNull: true, default: 10 },
+    is_customizable: { type: "INTEGER", notNull: true, default: 0 },
+    duration: { type: "INTEGER", notNull: true },
+    created_at: { type: "DATETIME", notNull: true, defaultRaw: "CURRENT_TIMESTAMP" },
+  },
+  foreignKeys: [
+    { column: "user_id", references: "USERS(user_id)" },
+    { column: "category_id", references: "CATEGORIES(category_id)" },
+    { column: "difficulty_id", references: "QUIZ_DIFFICULTIES(id)" },
+  ],
+};
+
+export const quizQuestionsTableDef = {
+  name: "QUIZ_QUESTIONS",
+  columns: {
+    id: { type: "INTEGER", primaryKey: true, autoincrement: true },
+    quiz_id: { type: "INTEGER", notNull: true },
+    question_id: { type: "INTEGER", notNull: true },
+    position: { type: "INTEGER", notNull: true },
+    time_limit: { type: "INTEGER", notNull: true, default: 15 },
+  },
+  foreignKeys: [
+    { column: "quiz_id", references: "QUIZZES(quiz_id)" },
+    { column: "question_id", references: "QUESTIONS(question_id)" },
+  ],
+};
+
+export const attemptAnswersTableDef = {
+  name: "ATTEMPT_ANSWERS",
+  columns: {
+    attempt_answer_id: { type: "INTEGER", primaryKey: true, autoincrement: true },
+    attempt_id: { type: "INTEGER", notNull: true },
+    question_id: { type: "INTEGER", notNull: true },
+    answer_id: { type: "INTEGER", notNull: true },
+    is_correct: { type: "INTEGER", notNull: true },
+    time_taken_ms: { type: "INTEGER", notNull: true },
+  },
+  foreignKeys: [
+    { column: "attempt_id", references: "QUIZ_ATTEMPTS(attempt_id)" },
+    { column: "question_id", references: "QUESTIONS(question_id)" },
+    { column: "answer_id", references: "ANSWER_OPTIONS(answer_id)" },
+  ],
+};
+
+export const answerOptionsTableDef = {
+  name: "ANSWER_OPTIONS",
+  columns: {
+    answer_id: { type: "INTEGER", primaryKey: true, autoincrement: true },
+    question_id: { type: "INTEGER", notNull: true },
+    answer_text: { type: "TEXT", notNull: true },
+    is_correct: { type: "INTEGER", notNull: true, default: 0 },
+  },
+  foreignKeys: [
+    { column: "question_id", references: "QUESTIONS(question_id)" },
+  ],
+};
+
+export const quizLikesTableDef = {
+  name: "QUIZ_LIKES",
+  columns: {
+    user_id: { type: "INTEGER", notNull: true },
+    quiz_id: { type: "INTEGER", notNull: true },
+    created_at: { type: "DATETIME", notNull: true, defaultRaw: "CURRENT_TIMESTAMP" },
+  },
+  primaryKey: ["user_id", "quiz_id"],
+  foreignKeys: [
+    { column: "user_id", references: "USERS(user_id)" },
+    { column: "quiz_id", references: "QUIZZES(quiz_id)" },
+  ],
+};
+
+export const logsTableDef = {
+  name: "LOGS",
+  columns: {
+    log_id: { type: "INTEGER", primaryKey: true, autoincrement: true },
+    action_performer: { type: "TEXT" },
+    action: { type: "TEXT" },
+    time_of_action: { type: "DATETIME", defaultRaw: "CURRENT_TIMESTAMP" },
+
+    user_id: { type: "INTEGER", notNull: true },
+    quiz_id: { type: "INTEGER", notNull: true },
+  },
+  foreignKeys: [
+    { column: "user_id", references: "USERS(user_id)" },
+    { column: "quiz_id", references: "QUIZZES(quiz_id)" },
+  ],
+};
+
+export const quizAttemptsTableDef = {
+  name: "QUIZ_ATTEMPTS",
+  columns: {
+    attempt_id: { type: "INTEGER", primaryKey: true, autoincrement: true },
+    user_id: { type: "INTEGER", notNull: true },
+    quiz_id: { type: "INTEGER", notNull: true },
+    score: { type: "INTEGER", notNull: true },
+
+    started_at: { type: "DATETIME", notNull: true, defaultRaw: "CURRENT_TIMESTAMP" },
+    finished_at: { type: "DATETIME" },
+    total_time_ms: { type: "INTEGER", notNull: true },
+  },
+  foreignKeys: [
+    { column: "user_id", references: "USERS(user_id)" },
+    { column: "quiz_id", references: "QUIZZES(quiz_id)" },
+  ],
+};
 
 
 function sqlQuote(value: string): string {
@@ -261,19 +390,50 @@ export async function createSchemaAndData(): Promise<void> {
 
   await db.connection.exec(createTableStatement(userRolesTableDef));
   await seedRoles();
+  console.log("User roles loaded");
+  
 
   await db.connection.exec(createTableStatement(usersTableDef));
   await seedUsers();
+  console.log("Users loaded");
   
   await db.connection.exec(createTableStatement(categoriesTableDef));
+  console.log("Categories table created");
 
   await db.connection.exec(createTableStatement(categorySuggestionsTableDef));
+  console.log("Category suggestions table created");
 
   await db.connection.exec(createTableStatement(questionTypesTableDef));
   await seedQuestionTypes(); 
+  console.log("Question types loaded");
 
   await db.connection.exec(createTableStatement(quizDifficultiesTableDef));
   await seedQuizDifficulties();
+  console.log("Quiz difficulties loaded");
+
+  await db.connection.exec(createTableStatement(questionsTableDef));
+  console.log("Questions table created");
+
+  await db.connection.exec(createTableStatement(quizzesTableDef));
+  console.log("Quizzes table created");
+
+  await db.connection.exec(createTableStatement(quizQuestionsTableDef));
+  console.log("Quiz questions table created");
+
+  await db.connection.exec(createTableStatement(attemptAnswersTableDef));
+  console.log("Attempt answers table created");
+
+  await db.connection.exec(createTableStatement(answerOptionsTableDef));
+  console.log("Answer options table created");
+
+  await db.connection.exec(createTableStatement(quizLikesTableDef));
+  console.log("Quiz likes table created");
+
+  await db.connection.exec(createTableStatement(logsTableDef));
+  console.log("Logs table created");
+
+  await db.connection.exec(createTableStatement(quizAttemptsTableDef));
+  console.log("Quiz attempts table created");
 }
 
 
