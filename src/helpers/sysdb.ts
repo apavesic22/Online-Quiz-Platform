@@ -1,6 +1,6 @@
 // system database helper
 // open sqlite database and create tables if they do not exist
-
+/*
 import { open, Database } from "sqlite";
 import sqlite3 from "sqlite3";
 
@@ -11,7 +11,6 @@ export const db: { connection: Database | null} = {
   connection: null
 };
 
-/*
 export async function openDb(): Promise<void> {
   db.connection = await open({
     filename: process.env.SYSDBFILE || './db/sysdb.sqlite3',

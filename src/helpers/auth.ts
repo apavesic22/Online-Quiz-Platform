@@ -6,7 +6,6 @@ import SQLiteStoreFactory from 'connect-sqlite3';
 
 import { User } from '../model/user';
 import { HttpError } from './errors';
-import { reloadUsers } from './sysdb';
 
 export const authRouter = Router();
 
@@ -78,7 +77,6 @@ export async function initAuth(app: Express, reset: boolean = false): Promise<vo
     users.length = 0;
   }
   if(users.length > 0) return; // already initialized
-  reloadUsers();
 }
 
 // Find user helpers

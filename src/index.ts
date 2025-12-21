@@ -4,12 +4,9 @@ import { config } from 'dotenv';
 
 import { APP_VERSION } from './shared/version';
 import { errorHandler } from './helpers/errors';
-import { openDb as openSysDb } from './helpers/sysdb';
 import { openDb } from './helpers/db';
 import { authRouter, initAuth } from './helpers/auth';
 import { uploadRouter } from './helpers/fileupload';
-import { personsRouter } from './api/persons';
-import { teamsRouter } from './api/teams';
 
 config({ quiet: true });
 
@@ -31,9 +28,6 @@ const apiUrl = process.env.APIURL || '/api';
 app.use(express.json());
 
 async function main() {
-  await openSysDb();
-  console.log('System database connected');
-
   await initAuth(app);
   console.log('Initialize authorization framework');
 
@@ -46,9 +40,6 @@ async function main() {
   // file upload router
   app.use(apiUrl + '/upload', uploadRouter);
 
-  // import and install api routers
-  app.use(apiUrl + '/persons', personsRouter);
-  app.use(apiUrl + '/teams', teamsRouter);
 
   // install our error handler (must be the last app.use)
   app.use(errorHandler);
