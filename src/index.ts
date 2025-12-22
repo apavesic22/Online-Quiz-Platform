@@ -41,7 +41,6 @@ async function main() {
   // auth router
   app.use('/api/auth', authRouter);
   
-  // file upload router
   app.use(apiUrl + '/upload', uploadRouter);
   app.use(apiUrl + '/users', usersRouter);  
   app.use(apiUrl + '/quizzes', quizzesRouter);
