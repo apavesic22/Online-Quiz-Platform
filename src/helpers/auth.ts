@@ -50,31 +50,31 @@ export async function initAuth(
   reset: boolean = false
 ): Promise<void> {
   const { Strategy } = require("passport-json") as any;
-passport.use(
-  new Strategy(
-    async (
-      username: string,
-      password: string,
-      done: (error: any, user?: Express.User | false, info?: any) => void
-    ) => {
-      try {
-        const user = await findUserByUsername(username);
+  passport.use(
+    new Strategy(
+      async (
+        username: string,
+        password: string,
+        done: (error: any, user?: Express.User | false, info?: any) => void
+      ) => {
+        try {
+          const user = await findUserByUsername(username);
 
-        if (!user) {
-          return done(null, false, { message: "User not found" });
+          if (!user) {
+            return done(null, false, { message: "User not found" });
+          }
+
+          if (!verifyPassword(password, user.password)) {
+            return done(null, false, { message: "Invalid password" });
+          }
+
+          return done(null, user);
+        } catch (err) {
+          return done(err);
         }
-
-        if (!verifyPassword(password, user.password)) {
-          return done(null, false, { message: "Invalid password" });
-        }
-
-        return done(null, user);
-      } catch (err) {
-        return done(err);
       }
-    }
-  )
-);
+    )
+  );
 
   // Middleware setup with persistent sessions
   const SQLiteStore = SQLiteStoreFactory(session);

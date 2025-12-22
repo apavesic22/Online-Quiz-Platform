@@ -1,20 +1,19 @@
 import { Router, Request, Response } from "express";
 import {db} from "../helpers/db";
+import { requireRole } from "../helpers/auth";  
 
 export const usersRouter = Router();
 
-usersRouter.get("/", async (req, res) => {
+usersRouter.get("/",requireRole([1,2]) , async (req, res) => {
   try {
     if (!db.connection) {
       return res.status(500).json({ error: "Database not initialized" });
     }
 
-    // --- pagination params ---
     const page = Math.max(parseInt(req.query.page as string) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit as string) || 10, 100);
     const offset = (page - 1) * limit;
 
-    // --- total count ---
     const totalRow = await db.connection.get<{ count: number }>(`
       SELECT COUNT(*) as count FROM USERS
     `);
@@ -22,7 +21,6 @@ usersRouter.get("/", async (req, res) => {
     const total = totalRow?.count ?? 0;
     const totalPages = Math.ceil(total / limit);
 
-    // --- data query with JOIN ---
     const users = await db.connection.all(`
       SELECT
         u.user_id,
