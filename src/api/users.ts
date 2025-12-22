@@ -149,7 +149,6 @@ usersRouter.get(
         return res.status(404).json({ error: "User not found" });
       }
 
-      // In practice this will almost never happen, but included per spec
       if (Object.keys(user).length === 0) {
         return res.status(204).send();
       }
@@ -162,19 +161,122 @@ usersRouter.get(
   }
 );
 
-usersRouter.put('/:username', async (req, res) => {
-  res.json({ message: 'Users endpoint is under construction.' });
-});
+usersRouter.put(
+  "/:username",
+  requireRole([1, 2]), 
+  async (req, res) => {
+    try {
+      if (!db.connection) {
+        return res.status(500).json({ error: "Database not initialized" });
+      }
 
-usersRouter.delete('/:username', async (req, res) => {
-  res.json({ message: 'Users endpoint is under construction.' });
-});
+      const { username } = req.params;
+      const { email, role_id, verified } = req.body;
 
-usersRouter.get('/:userId/roles', async (req, res) => {
-  res.json({ message: 'Users endpoint is under construction.' });
-});
+      if (email === undefined && role_id === undefined && verified === undefined) {
+        return res.status(204).send();
+      }
 
-usersRouter.put('/:userId/roles', async (req, res) => {
-  res.json({ message: 'Users endpoint is under construction.' });
-});
+      if (
+        (role_id !== undefined && typeof role_id !== "number") ||
+        (verified !== undefined && ![0, 1].includes(verified))
+      ) {
+        return res.status(400).json({ error: "Invalid fields" });
+      }
+
+      const user = await db.connection.get(
+        `SELECT user_id FROM USERS WHERE username = ?`,
+        [username]
+      );
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (role_id !== undefined) {
+        const role = await db.connection.get(
+          `SELECT role_id FROM USER_ROLES WHERE role_id = ?`,
+          [role_id]
+        );
+
+        if (!role) {
+          return res.status(400).json({ error: "Invalid role_id" });
+        }
+      }
+
+      const updates: string[] = [];
+      const values: any[] = [];
+
+      if (email !== undefined) {
+        updates.push("email = ?");
+        values.push(email);
+      }
+
+      if (role_id !== undefined) {
+        updates.push("role_id = ?");
+        values.push(role_id);
+      }
+
+      if (verified !== undefined) {
+        updates.push("verified = ?");
+        values.push(verified);
+      }
+
+      values.push(username);
+
+      await db.connection.run(
+        `UPDATE USERS SET ${updates.join(", ")} WHERE username = ?`,
+        values
+      );
+
+      res.status(200).json({ message: "User updated successfully" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  }
+);
+
+usersRouter.delete(
+  "/:username",
+  requireRole([1, 2]), // Admin + Management
+  async (req, res) => {
+    try {
+      if (!db.connection) {
+        return res.status(500).json({ error: "Database not initialized" });
+      }
+
+      const { username } = req.params;
+
+      // ---- check user existence ----
+      const user = await db.connection.get<{
+        user_id: number;
+        role_id: number;
+      }>(
+        `SELECT user_id, role_id FROM USERS WHERE username = ?`,
+        [username]
+      );
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // ---- protect admin accounts ----
+      if (user.role_id === 1) {
+        return res.status(403).json({ error: "Cannot delete administrator" });
+      }
+
+      await db.connection.run(
+        `DELETE FROM USERS WHERE user_id = ?`,
+        [user.user_id]
+      );
+
+      res.status(200).json({ message: "User deleted successfully" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to delete user" });
+    }
+  }
+);
+
 
