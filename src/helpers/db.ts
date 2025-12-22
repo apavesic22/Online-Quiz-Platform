@@ -298,6 +298,18 @@ export const STATIC_ROLES = [
   { role_id: 4, name: "Regular user" },
 ] as const;
 
+export const STATIC_CATEGORIES = [
+  { category_id: 1, category_name: "General Knowledge" },
+  { category_id: 2, category_name: "Science" },
+  { category_id: 3, category_name: "History" },
+  { category_id: 4, category_name: "Geography" },
+  { category_id: 5, category_name: "Sports" },
+  { category_id: 6, category_name: "Technology" },
+  { category_id: 7, category_name: "Movies & TV" },
+  { category_id: 8, category_name: "Music" },
+] as const;
+
+
 export async function seedRoles(): Promise<void> {
   if (!db.connection) throw new Error("DB not open");
 
@@ -460,6 +472,22 @@ function seedQuestionTypes() {
   }
 }
 
+export async function seedCategories(): Promise<void> {
+  if (!db.connection) throw new Error("DB not open");
+
+  for (const c of STATIC_CATEGORIES) {
+    await db.connection.run(
+      `
+      INSERT OR IGNORE INTO CATEGORIES
+        (category_id, category_name, times_chosen)
+      VALUES (?, ?, 0)
+      `,
+      [c.category_id, c.category_name]
+    );
+  }
+}
+
+
 const indexStatements = [
   `CREATE INDEX IF NOT EXISTS idx_users_role ON USERS(role_id);`,
   `CREATE INDEX IF NOT EXISTS idx_category_suggestions_status ON CATEGORY_SUGGESTIONS(status);`,
@@ -467,7 +495,7 @@ const indexStatements = [
   `CREATE INDEX IF NOT EXISTS idx_questions_type ON QUESTIONS(question_type_id);`,
   `CREATE INDEX IF NOT EXISTS idx_questions_quiz ON QUESTIONS(quiz_id);`,
   `CREATE INDEX IF NOT EXISTS idx_questions_type ON QUESTIONS(question_type_id);`,
-  
+
   `CREATE INDEX IF NOT EXISTS idx_quizzes_user ON QUIZZES(user_id);`,
   `CREATE INDEX IF NOT EXISTS idx_quizzes_category ON QUIZZES(category_id);`,
   `CREATE INDEX IF NOT EXISTS idx_quizzes_difficulty ON QUIZZES(difficulty_id);`,
@@ -493,6 +521,7 @@ export async function createSchemaAndData(): Promise<void> {
   console.log("Users loaded");
 
   await db.connection.exec(createTableStatement(categoriesTableDef));
+  await seedCategories();
   console.log("Categories table created");
 
   await db.connection.exec(createTableStatement(categorySuggestionsTableDef));

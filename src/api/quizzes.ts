@@ -1,5 +1,6 @@
-import { Router } from "express";
+import { Router, Request } from "express";
 import { db } from "../helpers/db";
+import { User } from "../model/user";
 
 export const quizzesRouter = Router();
 
@@ -66,9 +67,107 @@ quizzesRouter.get("/", async (req, res) => {
   }
 });
 
-quizzesRouter.post('/', async (req, res) => {
-  res.json({ message: 'Quizzes endpoint is under construction.' });
-} );
+
+quizzesRouter.post("/", async (req, res) => {
+  try {
+    if (!db.connection) {
+      return res.status(500).json({ error: "Database not initialized" });
+    }
+
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = req.user as User;
+
+    const {
+      quiz_name,
+      category_id,
+      difficulty_id,
+      question_count,
+      duration,
+    } = req.body;
+
+    // ---- validation ----
+    if (!quiz_name || !category_id || !difficulty_id) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // ---- category exists ----
+    const category = await db.connection.get(
+      `SELECT category_id FROM CATEGORIES WHERE category_id = ?`,
+      [category_id]
+    );
+
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    // ---- difficulty exists ----
+    const difficulty = await db.connection.get(
+      `SELECT id FROM QUIZ_DIFFICULTIES WHERE id = ?`,
+      [difficulty_id]
+    );
+
+    if (!difficulty) {
+      return res.status(404).json({ error: "Difficulty not found" });
+    }
+
+    // ---- uniqueness (same user, same name) ----
+    const existing = await db.connection.get(
+      `
+      SELECT quiz_id
+      FROM QUIZZES
+      WHERE user_id = ? AND quiz_name = ?
+      `,
+      [user.id, quiz_name]
+    );
+
+    if (existing) {
+      return res.status(409).json({ error: "Quiz already exists" });
+    }
+
+    // ---- role-based customization ----
+    const isVerified = user.roles?.includes(3);
+
+    const finalQuestionCount = isVerified && question_count
+      ? question_count
+      : 10;
+
+    const finalDuration = isVerified && duration
+      ? duration
+      : 300;
+
+    const isCustomizable = isVerified ? 1 : 0;
+
+    // ---- insert quiz ----
+    const result = await db.connection.run(
+      `
+      INSERT INTO QUIZZES
+        (user_id, category_id, difficulty_id,
+         quiz_name, question_count, duration, is_customizable)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        user.id,
+        category_id,
+        difficulty_id,
+        quiz_name,
+        finalQuestionCount,
+        finalDuration,
+        isCustomizable,
+      ]
+    );
+
+    res.status(201).json({
+      quiz_id: result.lastID,
+      message: "Quiz created successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to create quiz" });
+  }
+});
 
 quizzesRouter.get('/:id', async (req, res) => {
   res.json({ message: 'Quizzes endpoint is under construction.' });
