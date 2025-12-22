@@ -116,9 +116,51 @@ usersRouter.post(
   }
 );
 
-usersRouter.get('/:username', async (req, res) => {
-  res.json({ message: 'Users endpoint is under construction.' });
-});
+usersRouter.get(
+  "/:username",
+  requireRole([1, 2]), 
+  async (req, res) => {
+    try {
+      if (!db.connection) {
+        return res.status(500).json({ error: "Database not initialized" });
+      }
+
+      const { username } = req.params;
+
+      const user = await db.connection.get(
+        `
+        SELECT
+          u.user_id,
+          u.username,
+          u.email,
+          u.verified,
+          u.rank,
+          u.total_score,
+          r.role_id,
+          r.name AS role_name
+        FROM USERS u
+        JOIN USER_ROLES r ON r.role_id = u.role_id
+        WHERE u.username = ?
+      `,
+        [username]
+      );
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // In practice this will almost never happen, but included per spec
+      if (Object.keys(user).length === 0) {
+        return res.status(204).send();
+      }
+
+      res.status(200).json(user);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  }
+);
 
 usersRouter.put('/:username', async (req, res) => {
   res.json({ message: 'Users endpoint is under construction.' });
