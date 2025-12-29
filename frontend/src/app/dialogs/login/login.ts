@@ -54,7 +54,6 @@ export class LoginDialog {
     private snack: MatSnackBar,
     private dialogRef: MatDialogRef<LoginDialog>
   ) {
-    // ✅ form is initialized AFTER fb exists
     this.form = this.fb.group({
       username: ['', Validators.required],
       password: ['', Validators.required]

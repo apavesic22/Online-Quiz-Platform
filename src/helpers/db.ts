@@ -415,6 +415,95 @@ export async function seedUsers(): Promise<void> {
   }
 }
 
+export async function seedDemoQuizzes(): Promise<void> {
+  if (!db.connection) throw new Error("DB not open");
+
+  // ---- get admin user ----
+const creator = await db.connection.get<{ user_id: number }>(
+  `
+  SELECT user_id
+  FROM USERS
+  WHERE role_id = 4
+  ORDER BY user_id ASC
+  LIMIT 1
+  `
+);
+
+if (!creator) return;
+
+  // ---- get categories ----
+  const categories = await db.connection.all<{ category_id: number }[]>(
+    `SELECT category_id FROM CATEGORIES`
+  );
+
+  if (categories.length === 0) return;
+
+  const quizzes = [
+    { name: 'General Knowledge Quiz', difficulty_id: 1 },
+    { name: 'Programming Basics', difficulty_id: 2 },
+    { name: 'Movie Trivia', difficulty_id: 3 }
+  ];
+
+  for (const quiz of quizzes) {
+    const result = await db.connection.run(
+      `
+      INSERT INTO QUIZZES
+        (user_id, category_id, difficulty_id, quiz_name, question_count, duration)
+      VALUES (?, ?, ?, ?, ?, ?)
+      `,
+      [
+        creator.user_id,
+        categories[0].category_id,
+        quiz.difficulty_id,
+        quiz.name,
+        5,
+        300
+      ]
+    );
+
+    const quizId = result.lastID!;
+
+    // ---- questions ----
+    for (let i = 1; i <= 5; i++) {
+      const qRes = await db.connection.run(
+        `
+        INSERT INTO QUESTIONS
+          (quiz_id, question_type_id, question_text, position, time_limit)
+        VALUES (?, ?, ?, ?, ?)
+        `,
+        [
+          quizId,
+          1, // multiple choice
+          `Question ${i} for ${quiz.name}?`,
+          i,
+          15
+        ]
+      );
+
+      const questionId = qRes.lastID!;
+
+      // ---- answers ----
+      for (let a = 1; a <= 4; a++) {
+        await db.connection.run(
+          `
+          INSERT INTO ANSWER_OPTIONS
+            (question_id, answer_text, is_correct)
+          VALUES (?, ?, ?)
+          `,
+          [
+            questionId,
+            `Answer ${a}`,
+            a === 1 ? 1 : 0
+          ]
+        );
+      }
+    }
+  }
+
+  console.log("Demo quizzes seeded");
+}
+
+
 export async function recomputeUserRanks(): Promise<void> {
   if (!db.connection) throw new Error("DB not open");
 
@@ -555,6 +644,9 @@ export async function createSchemaAndData(): Promise<void> {
 
   await db.connection.exec(createTableStatement(quizAttemptsTableDef));
   console.log("Quiz attempts table created");
+
+  await seedDemoQuizzes();
+  console.log("Demo quizzes seeded");
 
   for (const stmt of indexStatements) {
     await db.connection.exec(stmt);
