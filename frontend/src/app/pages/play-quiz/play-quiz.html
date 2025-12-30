@@ -1,7 +1,11 @@
 <div class="play-container">
   @if (loading) {
     <p>Loading quiz...</p>
-  } @else if (currentQuestion) {
+  } @else {
+
+    <div class="timer">
+      Time left: {{ timeLeft }}s
+    </div>
 
     <h2>Question {{ currentIndex + 1 }} / {{ questions.length }}</h2>
 
@@ -11,7 +15,16 @@
 
     <div class="answers">
       @for (answer of currentQuestion.answers; track answer.answer_id) {
-        <button mat-raised-button class="answer-btn">
+        <button
+          mat-raised-button
+          class="answer-btn"
+          [disabled]="answered"
+          [ngClass]="{
+            'correct': answered && isCorrect(answer),
+            'wrong': answered && isSelected(answer) && !isCorrect(answer)
+          }"
+          (click)="selectAnswer(answer)"
+        >
           {{ answer.answer_text }}
         </button>
       }

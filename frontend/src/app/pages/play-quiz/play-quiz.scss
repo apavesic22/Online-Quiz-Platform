@@ -5,6 +5,12 @@
   text-align: center;
 }
 
+.timer {
+  font-size: 18px;
+  margin-bottom: 16px;
+  font-weight: bold;
+}
+
 .question-text {
   font-size: 20px;
   margin: 24px 0;
@@ -19,4 +25,14 @@
 .answer-btn {
   font-size: 16px;
   padding: 12px;
+}
+
+.correct {
+  background-color: #4caf50 !important;
+  color: white;
+}
+
+.wrong {
+  background-color: #f44336 !important;
+  color: white;
 }
