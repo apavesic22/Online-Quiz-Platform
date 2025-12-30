@@ -3,10 +3,12 @@
 
   <span class="spacer"></span>
 
+  <button mat-button routerLink="/create">Create Quiz</button>
+
   @if (!isLoggedIn) {
-    <button mat-button (click)="onLogin()">Login</button>
+  <button mat-button (click)="onLogin()">Login</button>
   } @else {
-    <button mat-button (click)="onLogout()">Logout</button>
+  <button mat-button (click)="onLogout()">Logout</button>
   }
 </mat-toolbar>
 

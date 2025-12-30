@@ -3,16 +3,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { interval, Subscription } from 'rxjs';
-
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { QuizzesService } from '../../services/quizzes';
 import { QuizQuestion, QuizAnswer } from '../../models/quiz-question';
 
 @Component({
   selector: 'play-quiz-page',
   standalone: true,
-  imports: [CommonModule, MatButtonModule],
+  imports: [CommonModule, MatButtonModule, MatProgressBarModule],
   templateUrl: './play-quiz.html',
-  styleUrls: ['./play-quiz.scss']
+  styleUrls: ['./play-quiz.scss'],
 })
 export class PlayQuizPage implements OnInit, OnDestroy {
   quizId!: number;
@@ -42,7 +42,7 @@ export class PlayQuizPage implements OnInit, OnDestroy {
     this.quizId = Number(this.route.snapshot.paramMap.get('quizId'));
 
     this.quizzesService.getQuizQuestions(this.quizId).subscribe({
-      next: questions => {
+      next: (questions) => {
         this.questions = questions;
         this.currentQuestion = this.questions[0];
         this.loading = false;
@@ -51,7 +51,7 @@ export class PlayQuizPage implements OnInit, OnDestroy {
       error: () => {
         alert('Failed to load quiz');
         this.router.navigate(['/']);
-      }
+      },
     });
   }
 
@@ -138,5 +138,10 @@ export class PlayQuizPage implements OnInit, OnDestroy {
 
   isSelected(answer: QuizAnswer): boolean {
     return this.selectedAnswerId === answer.answer_id;
+  }
+
+  get progressValue(): number {
+    const total = this.currentQuestion?.time_limit ?? 15;
+    return (this.timeLeft / total) * 100;
   }
 }
