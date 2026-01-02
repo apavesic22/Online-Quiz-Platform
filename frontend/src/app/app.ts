@@ -15,8 +15,8 @@ import { LoginDialog } from './dialogs/login/login';
     RouterModule,
     MatToolbarModule,
     MatButtonModule,
-    MatDialogModule
-  ],
+    MatDialogModule,
+],
   templateUrl: './app.html',
   styleUrls: ['./app.scss']
 })

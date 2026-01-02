@@ -20,6 +20,42 @@ interface AuthRequest extends Request {
   user?: User;
 }
 
+authRouter.post("/register", async (req: Request, res: Response) => {
+  try {
+    const { username, email, password } = req.body;
+
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    if (!db.connection) {
+      return res.status(500).json({ error: "Database not initialized" });
+    }
+
+    const existing = await db.connection.get(
+      "SELECT user_id FROM USERS WHERE username = ? OR email = ?",
+      [username, email]
+    );
+
+    if (existing) {
+      return res.status(409).json({ error: "Username or Email already taken" });
+    }
+
+    const passwordHash = hashPassword(password);
+
+    await db.connection.run(
+      `INSERT INTO USERS (role_id, username, email, password_hash, verified, rank, total_score)
+       VALUES (?, ?, ?, ?, ?, 0, 0)`,
+      [4, username, email, passwordHash, 0]
+    );
+
+    res.status(201).json({ message: "Registration successful" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Registration failed" });
+  }
+});
+
 export function requireRole(roles: number[]): RequestHandler {
   return (req: Request, _res: Response, next: NextFunction) => {
     const authReq = req as AuthRequest;
