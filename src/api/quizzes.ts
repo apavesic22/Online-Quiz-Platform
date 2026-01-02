@@ -5,6 +5,79 @@ import { LeaderboardEntry } from "../model/LeaderboardEntry";
 
 export const quizzesRouter = Router();
 
+quizzesRouter.post("/", async (req, res) => {
+  try {
+    if (!db.connection) {
+      return res.status(500).json({ error: "Database not initialized" });
+    }
+
+    const { quiz_name, category_id, difficulty_id, questions } = req.body;
+    
+    // If user is guest, assign to ID 4 (Regular user) per your seed file
+    const userId = req.isAuthenticated() ? (req.user as any).user_id : 4;
+
+    await db.connection.run("BEGIN TRANSACTION");
+
+    // 1. Insert into QUIZZES table using provided difficulty_id
+    const quizResult = await db.connection.run(
+      `INSERT INTO QUIZZES 
+      (user_id, category_id, difficulty_id, quiz_name, question_count, duration, is_customizable) 
+      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [userId, category_id, difficulty_id, quiz_name, questions.length, 300, 0]
+    );
+    const quizId = quizResult.lastID;
+
+    // 2. Loop through and insert QUESTIONS
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      const typeId = q.type === 'multiple' ? 1 : 2; // 1: Multiple Choice, 2: True/False
+
+      const qResult = await db.connection.run(
+        `INSERT INTO QUESTIONS (quiz_id, question_type_id, question_text, position, time_limit) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [quizId, typeId, q.text, i + 1, 15]
+      );
+      const questionId = qResult.lastID;
+
+      // 3. Insert ANSWER_OPTIONS
+      if (q.type === 'multiple') {
+        for (const opt of q.options) {
+          await db.connection.run(
+            `INSERT INTO ANSWER_OPTIONS (question_id, answer_text, is_correct) VALUES (?, ?, ?)`,
+            [questionId, opt, opt === q.correct_answer ? 1 : 0]
+          );
+        }
+      } else {
+        const bools = ["True", "False"];
+        for (const b of bools) {
+          await db.connection.run(
+            `INSERT INTO ANSWER_OPTIONS (question_id, answer_text, is_correct) VALUES (?, ?, ?)`,
+            [questionId, b, q.correct_answer === b ? 1 : 0]
+          );
+        }
+      }
+    }
+
+    await db.connection.run("COMMIT");
+    res.status(201).json({ message: "Quiz created" });
+  } catch (err) {
+    if (db.connection) await db.connection.run("ROLLBACK");
+    res.status(500).json({ error: "Failed to finalize quiz" });
+  }
+});
+
+quizzesRouter.get("/difficulties", async (req, res) => {
+  try {
+    if (!db.connection) {
+      return res.status(500).json({ error: "Database not initialized" });
+    }
+    const difficulties = await db.connection.all("SELECT id, difficulty FROM QUIZ_DIFFICULTIES");
+    res.json(difficulties);
+  } catch (err) {
+    res.status(500).json({ error: "Could not load difficulties" });
+  }
+});
+
 quizzesRouter.get("/", async (req, res) => {
   try {
     if (!db.connection) {
@@ -447,15 +520,15 @@ quizzesRouter.delete("/:id", async (req, res) => {
   }
 });
 
-quizzesRouter.get('/:id/questions', async (req, res) => {
+quizzesRouter.get("/:id/questions", async (req, res) => {
   try {
     if (!db.connection) {
-      return res.status(500).json({ error: 'Database not initialized' });
+      return res.status(500).json({ error: "Database not initialized" });
     }
 
     const quizId = Number(req.params.id);
     if (Number.isNaN(quizId)) {
-      return res.status(400).json({ error: 'Invalid quiz id' });
+      return res.status(400).json({ error: "Invalid quiz id" });
     }
 
     // ---- quiz exists ----
@@ -465,16 +538,19 @@ quizzesRouter.get('/:id/questions', async (req, res) => {
     );
 
     if (!quiz) {
-      return res.status(404).json({ error: 'Quiz not found' });
+      return res.status(404).json({ error: "Quiz not found" });
     }
 
     // ---- fetch questions ----
-    const questions = await db.connection.all<{
-      question_id: number;
-      question_text: string;
-      time_limit: number;
-      type: string;
-    }[]>(`
+    const questions = await db.connection.all<
+      {
+        question_id: number;
+        question_text: string;
+        time_limit: number;
+        type: string;
+      }[]
+    >(
+      `
       SELECT
         q.question_id,
         q.question_text,
@@ -484,7 +560,9 @@ quizzesRouter.get('/:id/questions', async (req, res) => {
       JOIN QUESTION_TYPES qt ON qt.id = q.question_type_id
       WHERE q.quiz_id = ?
       ORDER BY q.position ASC
-    `, [quizId]);
+    `,
+      [quizId]
+    );
 
     if (questions.length === 0) {
       return res.status(204).send();
@@ -510,10 +588,9 @@ quizzesRouter.get('/:id/questions', async (req, res) => {
     res.status(200).json(questions);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to load questions' });
+    res.status(500).json({ error: "Failed to load questions" });
   }
 });
-
 
 quizzesRouter.get("/:id/leaderboard", async (req, res) => {
   try {

@@ -1,25 +1,88 @@
-<mat-card>
-  <h2>Create Quiz</h2>
+<mat-card class="create-quiz-card">
+  <h2>Create New Quiz</h2>
 
-  <form [formGroup]="quizForm" (ngSubmit)="onCreateQuiz()">
+  <form [formGroup]="quizForm" (ngSubmit)="submitQuiz()">
+    <div class="quiz-info-section">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Quiz Title</mat-label>
+        <input matInput formControlName="quiz_name" placeholder="e.g. My Awesome Quiz" />
+      </mat-form-field>
 
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Quiz name</mat-label>
-      <input matInput formControlName="quiz_name">
-    </mat-form-field>
+      <div class="selection-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Category</mat-label>
+          <mat-select formControlName="category_id">
+            <mat-option *ngFor="let cat of categories" [value]="cat.category_id">
+              {{ cat.category_name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
 
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Category</mat-label>
-      <mat-select formControlName="category_id">
-        <mat-option *ngFor="let c of categories" [value]="c.category_id">
-          {{ c.category_name }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Difficulty</mat-label>
+          <mat-select formControlName="difficulty_id">
+            <mat-option *ngFor="let diff of difficulties" [value]="diff.id">
+              {{ diff.difficulty }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
 
-    <button mat-raised-button color="primary" type="submit">
-      Create Quiz
-    </button>
+    <div formArrayName="questions">
+      <div *ngFor="let q of questions.controls; let i=index" [formGroupName]="i" class="question-item">
+        <div class="question-header">
+          <h3>Question {{ i + 1 }}</h3>
+          <button mat-icon-button color="warn" type="button" (click)="questions.removeAt(i)" *ngIf="questions.length > 1">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
 
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Question Text</mat-label>
+          <input matInput formControlName="text" />
+        </mat-form-field>
+
+        <mat-radio-group formControlName="type" class="type-selection">
+          <mat-radio-button value="multiple">Multiple Choice</mat-radio-button>
+          <mat-radio-button value="boolean">True / False</mat-radio-button>
+        </mat-radio-group>
+
+        <div *ngIf="q.get('type')?.value === 'multiple'">
+          <mat-radio-group formControlName="correct_answer_index" class="options-radio-group">
+            <div formArrayName="options">
+              <div *ngFor="let opt of getOptions(i).controls; let j=index" class="option-row">
+                <mat-radio-button [value]="j"></mat-radio-button>
+                <mat-form-field appearance="outline" class="flex-grow">
+                  <mat-label>Option {{ j + 1 }}</mat-label>
+                  <input matInput [formControlName]="j" placeholder="Enter answer text" />
+                </mat-form-field>
+              </div>
+            </div>
+          </mat-radio-group>
+        </div>
+
+        <div *ngIf="q.get('type')?.value === 'boolean'" class="boolean-row">
+          <mat-radio-group formControlName="boolean_correct">
+            <mat-radio-button value="True">True</mat-radio-button>
+            <mat-radio-button value="False">False</mat-radio-button>
+          </mat-radio-group>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button mat-stroked-button color="primary" type="button" (click)="addQuestion()">
+        + Add New Question
+      </button>
+      <div class="submit-group">
+        <button mat-raised-button color="primary" type="submit" [disabled]="quizForm.invalid">
+          Finalize Quiz
+        </button>
+        <button mat-button type="button" (click)="router.navigate(['/'])">
+          Cancel
+        </button>
+      </div>
+    </div>
   </form>
 </mat-card>

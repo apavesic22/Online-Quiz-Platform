@@ -19,12 +19,20 @@ export class QuizzesService {
   constructor(private http: HttpClient) {}
 
   getQuizzes(page = 1, limit = 10): Observable<QuizResponse> {
-    return this.http.get<QuizResponse>(`${this.apiUrl}?page=${page}&limit=${limit}`);
+    return this.http.get<QuizResponse>(
+      `${this.apiUrl}?page=${page}&limit=${limit}`
+    );
   }
 
-  getQuizQuestions(quizId: number) {
-  return this.http.get<QuizQuestion[]>(
-    `/api/quizzes/${quizId}/questions`
-  );
-}
+  getQuizQuestions(quizId: number): Observable<QuizQuestion[]> {
+    return this.http.get<QuizQuestion[]>(`${this.apiUrl}/${quizId}/questions`);
+  }
+
+  getDifficulties(): Observable<any[]> {
+    return this.http.get<any[]>('/api/quizzes/difficulties');
+  }
+
+  createQuiz(quizData: any): Observable<any> {
+    return this.http.post(this.apiUrl, quizData);
+  }
 }

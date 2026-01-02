@@ -2,6 +2,7 @@ import { open, Database } from "sqlite";
 import sqlite3 from "sqlite3";
 import { hashPassword } from "./auth";
 import { faker } from "@faker-js/faker";
+import { quizData } from "./quizData";
 export const db: { connection: Database | null } = {
   connection: null,
 };
@@ -415,94 +416,83 @@ export async function seedUsers(): Promise<void> {
   }
 }
 
-export async function seedDemoQuizzes(): Promise<void> {
+export async function seedRealQuizzes(): Promise<void> {
   if (!db.connection) throw new Error("DB not open");
 
-  // ---- get admin user ----
-const creator = await db.connection.get<{ user_id: number }>(
-  `
-  SELECT user_id
-  FROM USERS
-  WHERE role_id = 4
-  ORDER BY user_id ASC
-  LIMIT 1
-  `
-);
-
-if (!creator) return;
-
-  // ---- get categories ----
-  const categories = await db.connection.all<{ category_id: number }[]>(
-    `SELECT category_id FROM CATEGORIES`
+  // 1. Get the default creator (Regular User ID 4)
+  const creator = await db.connection.get<{ user_id: number }>(
+    `SELECT user_id FROM USERS WHERE user_id = 4 LIMIT 1`
   );
+  if (!creator) {
+    console.error("Seed failed: User with ID 4 not found.");
+    return;
+  }
 
-  if (categories.length === 0) return;
+  // 2. Clear existing quizzes to avoid duplicates (Optional but recommended for testing)
+  // await db.connection.run("DELETE FROM QUIZZES"); 
 
-  const quizzes = [
-    { name: 'General Knowledge Quiz', difficulty_id: 1 },
-    { name: 'Programming Basics', difficulty_id: 2 },
-    { name: 'Movie Trivia', difficulty_id: 3 }
-  ];
+  console.log("Starting to seed real quiz data...");
 
-  for (const quiz of quizzes) {
-    const result = await db.connection.run(
-      `
-      INSERT INTO QUIZZES
-        (user_id, category_id, difficulty_id, quiz_name, question_count, duration)
-      VALUES (?, ?, ?, ?, ?, ?)
-      `,
-      [
-        creator.user_id,
-        categories[0].category_id,
-        quiz.difficulty_id,
-        quiz.name,
-        5,
-        300
-      ]
-    );
+  try {
+    await db.connection.run("BEGIN TRANSACTION");
 
-    const quizId = result.lastID!;
-
-    // ---- questions ----
-    for (let i = 1; i <= 5; i++) {
-      const qRes = await db.connection.run(
-        `
-        INSERT INTO QUESTIONS
-          (quiz_id, question_type_id, question_text, position, time_limit)
-        VALUES (?, ?, ?, ?, ?)
-        `,
+    for (const quiz of quizData) {
+      // Insert the Quiz
+      const quizResult = await db.connection.run(
+        `INSERT INTO QUIZZES 
+          (user_id, category_id, difficulty_id, quiz_name, question_count, duration) 
+         VALUES (?, ?, ?, ?, ?, ?)`,
         [
-          quizId,
-          1, // multiple choice
-          `Question ${i} for ${quiz.name}?`,
-          i,
-          15
+          creator.user_id,
+          quiz.cat,        // Category ID from your array
+          quiz.diff,       // Difficulty ID from your array
+          quiz.name,       // Quiz Name
+          quiz.qs.length,  // Count of questions
+          300              // 5 minutes duration
         ]
       );
 
-      const questionId = qRes.lastID!;
+      const quizId = quizResult.lastID!;
 
-      // ---- answers ----
-      for (let a = 1; a <= 4; a++) {
-        await db.connection.run(
-          `
-          INSERT INTO ANSWER_OPTIONS
-            (question_id, answer_text, is_correct)
-          VALUES (?, ?, ?)
-          `,
+      // 3. Loop through questions in this quiz
+      for (let i = 0; i < quiz.qs.length; i++) {
+        const questionObj = quiz.qs[i];
+
+        const qRes = await db.connection.run(
+          `INSERT INTO QUESTIONS 
+            (quiz_id, question_type_id, question_text, position, time_limit) 
+           VALUES (?, ?, ?, ?, ?)`,
           [
-            questionId,
-            `Answer ${a}`,
-            a === 1 ? 1 : 0
+            quizId,
+            1,                  // 1 = Multiple Choice
+            questionObj.t,      // The question text
+            i + 1,              // Position (1, 2, 3...)
+            20                  // 20 seconds per question
           ]
         );
+
+        const questionId = qRes.lastID!;
+
+        // 4. Loop through the 4 answers provided for this question
+        for (const answerText of questionObj.a) {
+          const isCorrect = (answerText === questionObj.c) ? 1 : 0;
+
+          await db.connection.run(
+            `INSERT INTO ANSWER_OPTIONS (question_id, answer_text, is_correct) 
+             VALUES (?, ?, ?)`,
+            [questionId, answerText, isCorrect]
+          );
+        }
       }
     }
+
+    await db.connection.run("COMMIT");
+    console.log(`Success: Seeded ${quizData.length} quizzes with 5 questions each.`);
+  } catch (error) {
+    await db.connection.run("ROLLBACK");
+    console.error("Seeding failed. Transaction rolled back:", error);
   }
-
-  console.log("Demo quizzes seeded");
 }
-
 
 export async function recomputeUserRanks(): Promise<void> {
   if (!db.connection) throw new Error("DB not open");
@@ -645,8 +635,8 @@ export async function createSchemaAndData(): Promise<void> {
   await db.connection.exec(createTableStatement(quizAttemptsTableDef));
   console.log("Quiz attempts table created");
 
-  await seedDemoQuizzes();
-  console.log("Demo quizzes seeded");
+  await seedRealQuizzes();
+  console.log("Quizzes seeded");
 
   for (const stmt of indexStatements) {
     await db.connection.exec(stmt);

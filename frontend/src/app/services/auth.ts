@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, map } from 'rxjs';
 import { User } from '../models/user';
 
 @Injectable({ providedIn: 'root' })
@@ -11,6 +11,11 @@ export class AuthService {
   currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(private http: HttpClient) {}
+
+  // Added helper to check login status for the 5-question limit
+  isLoggedIn(): boolean {
+    return this.currentUserSubject.value !== null;
+  }
 
   whoami(): Observable<User> {
     return this.http.get<User>(this.apiUrl).pipe(
