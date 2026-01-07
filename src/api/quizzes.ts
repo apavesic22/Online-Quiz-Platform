@@ -15,7 +15,7 @@ quizzesRouter.post("/", async (req, res) => {
     const { quiz_name, category_id, difficulty_id, questions } = req.body;
     
     // If user is guest, assign to ID 4 (Regular user) per your seed file
-    const userId = req.isAuthenticated() ? (req.user as any).user_id : 4;
+    const userId = req.isAuthenticated() ? (req.user as any).id : 4;
 
     await db.connection.run("BEGIN TRANSACTION");
 

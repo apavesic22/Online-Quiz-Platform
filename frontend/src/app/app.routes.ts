@@ -7,12 +7,6 @@ export const routes: Route[] = [
     title: 'Home',
   },
   {
-    path: 'quizzes',
-    loadComponent: () =>
-      import('./pages/quizzes/quizzes').then((m) => m.QuizzesPage),
-    title: 'Quizzes',
-  },
-  {
     path: 'play/:quizId',
     loadComponent: () =>
       import('./pages/play-quiz/play-quiz').then((m) => m.PlayQuizPage),
