@@ -4,13 +4,17 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { interval, Subscription } from 'rxjs';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { QuizzesService } from '../../services/quizzes';
+import { QuizzesService } from '../../services/quizzesService';
 import { QuizQuestion, QuizAnswer } from '../../models/quiz-question';
+import { AuthService } from '../../services/auth';
+import { User } from '../../models/user';
+import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'play-quiz-page',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatProgressBarModule],
+  imports: [CommonModule, MatButtonModule, MatProgressBarModule, LeaderboardComponent, RouterModule],
   templateUrl: './play-quiz.html',
   styleUrls: ['./play-quiz.scss'],
 })
@@ -31,14 +35,24 @@ export class PlayQuizPage implements OnInit, OnDestroy {
 
   correctCount = 0;
   wrongCount = 0;
+  quizFinished = false;
+  finalScore = 0;
+
+  user: User | null = null;
+  userAnswers: { question_id: number, answer_id: number }[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private quizzesService: QuizzesService
+    private quizzesService: QuizzesService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    this.authService.currentUser$.subscribe(user => {
+      this.user = user;
+    });
+
     this.quizId = Number(this.route.snapshot.paramMap.get('quizId'));
 
     this.quizzesService.getQuizQuestions(this.quizId).subscribe({
@@ -87,6 +101,8 @@ export class PlayQuizPage implements OnInit, OnDestroy {
     this.selectedAnswerId = answer.answer_id;
     this.stopTimer();
 
+    this.userAnswers.push({ question_id: this.currentQuestion.question_id, answer_id: answer.answer_id });
+
     if (answer.is_correct === 1) {
       this.correctCount++;
     } else {
@@ -124,10 +140,27 @@ export class PlayQuizPage implements OnInit, OnDestroy {
   }
 
   finishQuiz() {
-    alert(
-      `Quiz finished!\n\nCorrect: ${this.correctCount}\nIncorrect: ${this.wrongCount}`
-    );
-    this.router.navigate(['/']);
+    this.stopTimer();
+    this.quizFinished = true;
+    if (!this.user) {
+      alert(
+        `Quiz finished!\n\nCorrect: ${this.correctCount}\nIncorrect: ${this.wrongCount}`
+      );
+      this.router.navigate(['/quizzes']);
+    } else {
+      this.quizzesService.submitAnswers(this.quizId, this.userAnswers).subscribe({
+        next: (result) => {
+          this.finalScore = result.score;
+          this.correctCount = result.correctAnswers;
+          this.wrongCount = result.incorrectAnswers;
+        },
+        error: (err) => {
+          console.error(err);
+          alert('There was an error submitting your answers.');
+          this.router.navigate(['/quizzes']);
+        }
+      });
+    }
   }
 
   // ---------------- HELPERS ----------------

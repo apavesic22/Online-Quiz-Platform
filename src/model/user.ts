@@ -2,5 +2,7 @@ export interface User {
     id: number,
     username: string,
     password: string,
-    roles: number[]
+    roles: number[],
+    total_score: number,
+    rank: number
 }

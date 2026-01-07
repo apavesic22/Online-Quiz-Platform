@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import {db} from "../helpers/db";
 import { requireRole, hashPassword } from "../helpers/auth";
+import { User } from "../model/user";
 
 export const usersRouter = Router();
 
@@ -50,6 +51,46 @@ usersRouter.get("/",requireRole([1,2]) , async (req, res) => {
     res.status(500).json({ error: "Failed to fetch users" });
   }
 });
+
+usersRouter.get("/leaderboard", requireRole([1, 2, 3, 4]), async (req, res) => {
+    try {
+        if (!db.connection) {
+            return res.status(500).json({ error: "Database not initialized" });
+        }
+
+        const user = req.user as User;
+
+        const top10 = await db.connection.all(
+            `SELECT user_id, username, total_score, rank 
+             FROM USERS 
+             ORDER BY rank ASC, user_id ASC
+             LIMIT 10`
+        );
+
+        let currentUserData = null;
+        
+        const currentUserDb = await db.connection.get(
+            `SELECT user_id, username, total_score, rank 
+             FROM USERS 
+             WHERE user_id = ?`,
+            [user.id]
+        );
+
+        if (currentUserDb && currentUserDb.rank > 10) {
+            currentUserData = currentUserDb;
+        }
+
+        res.json({
+            top10: top10,
+            currentUser: currentUserData
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to fetch leaderboard" });
+    }
+});
+
 
 usersRouter.post(
   "/",

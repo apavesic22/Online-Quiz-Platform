@@ -1,0 +1,53 @@
+.leaderboard-container {
+  width: 100%;
+  max-width: 500px;
+  margin: 2rem auto;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+
+  h3 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+    }
+
+    th {
+      background-color: #eee;
+      font-weight: bold;
+    }
+
+    .player-row {
+      td {
+        border-bottom: 1px solid #ddd;
+      }
+
+      &:last-child td {
+        border-bottom: none;
+      }
+    }
+    
+    .current-user-row {
+        .separator {
+            text-align: center;
+            font-weight: bold;
+            border-bottom: none;
+            padding: 0.5rem;
+        }
+    }
+
+    .current-user {
+      font-weight: bold;
+      background-color: #e3f2fd;
+    }
+  }
+}

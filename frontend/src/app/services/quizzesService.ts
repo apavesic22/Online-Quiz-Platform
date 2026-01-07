@@ -26,6 +26,10 @@ export class QuizzesService {
     return this.http.get<QuizQuestion[]>(`${this.apiUrl}/${quizId}/questions`);
   }
 
+  submitAnswers(quizId: number, answers: { question_id: number, answer_id: number }[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${quizId}/submit`, { answers });
+  }
+
   getDifficulties(): Observable<any[]> {
     return this.http.get<any[]>('/api/quizzes/difficulties');
   }

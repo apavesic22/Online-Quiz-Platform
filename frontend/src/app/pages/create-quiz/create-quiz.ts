@@ -18,7 +18,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatIconModule } from '@angular/material/icon';
 
 import { CategoriesService } from '../../services/categories';
-import { QuizzesService } from '../../services/quizzes';
+import { QuizzesService } from '../../services/quizzesService';
 import { AuthService } from '../../services/auth';
 
 @Component({
