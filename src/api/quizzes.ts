@@ -13,7 +13,7 @@ quizzesRouter.post("/", async (req, res) => {
     }
 
     const { quiz_name, category_id, difficulty_id, questions } = req.body;
-    
+
     // If user is guest, assign to ID 4 (Regular user) per your seed file
     const userId = req.isAuthenticated() ? (req.user as any).id : 4;
 
@@ -31,7 +31,7 @@ quizzesRouter.post("/", async (req, res) => {
     // 2. Loop through and insert QUESTIONS
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
-      const typeId = q.type === 'multiple' ? 1 : 2; // 1: Multiple Choice, 2: True/False
+      const typeId = q.type === "multiple" ? 1 : 2; // 1: Multiple Choice, 2: True/False
 
       const qResult = await db.connection.run(
         `INSERT INTO QUESTIONS (quiz_id, question_type_id, question_text, position, time_limit) 
@@ -41,7 +41,7 @@ quizzesRouter.post("/", async (req, res) => {
       const questionId = qResult.lastID;
 
       // 3. Insert ANSWER_OPTIONS
-      if (q.type === 'multiple') {
+      if (q.type === "multiple") {
         for (const opt of q.options) {
           await db.connection.run(
             `INSERT INTO ANSWER_OPTIONS (question_id, answer_text, is_correct) VALUES (?, ?, ?)`,
@@ -72,7 +72,9 @@ quizzesRouter.get("/difficulties", async (req, res) => {
     if (!db.connection) {
       return res.status(500).json({ error: "Database not initialized" });
     }
-    const difficulties = await db.connection.all("SELECT id, difficulty FROM QUIZ_DIFFICULTIES");
+    const difficulties = await db.connection.all(
+      "SELECT id, difficulty FROM QUIZ_DIFFICULTIES"
+    );
     res.json(difficulties);
   } catch (err) {
     res.status(500).json({ error: "Could not load difficulties" });
@@ -500,100 +502,121 @@ quizzesRouter.get("/:id/questions", async (req, res) => {
   }
 });
 
-quizzesRouter.post("/:id/submit", requireRole([1, 2, 3, 4]), async (req: Request, res) => {
+quizzesRouter.post(
+  "/:id/submit",
+  requireRole([1, 2, 3, 4]),
+  async (req: Request, res) => {
     try {
-        if (!db.connection) {
-            return res.status(500).json({ error: "Database not initialized" });
-        }
+      if (!db.connection) {
+        return res.status(500).json({ error: "Database not initialized" });
+      }
 
-        const quizId = Number(req.params.id);
-        if (Number.isNaN(quizId)) {
-            return res.status(400).json({ error: "Invalid quiz id" });
-        }
+      const quizId = Number(req.params.id);
+      if (Number.isNaN(quizId)) {
+        return res.status(400).json({ error: "Invalid quiz id" });
+      }
 
-        const user = req.user as User;
-        const answers = req.body.answers; // Expects an array of { question_id: number, answer_id: number }
+      const user = req.user as User;
+      const answers = req.body.answers; // Expects an array of { question_id: number, answer_id: number }
 
-        if (!Array.isArray(answers)) {
-            return res.status(400).json({ error: "Invalid request body, expected 'answers' array" });
-        }
+      if (!Array.isArray(answers)) {
+        return res
+          .status(400)
+          .json({ error: "Invalid request body, expected 'answers' array" });
+      }
 
-        // --- Get quiz and difficulty ---
-        const quiz = await db.connection.get<{ difficulty: string }>(
-            `SELECT d.difficulty 
+      // --- Get quiz and difficulty ---
+      const quiz = await db.connection.get<{ difficulty: string }>(
+        `SELECT d.difficulty 
              FROM QUIZZES q
              JOIN QUIZ_DIFFICULTIES d ON q.difficulty_id = d.id
              WHERE q.quiz_id = ?`,
-            [quizId]
-        );
+        [quizId]
+      );
 
-        if (!quiz) {
-            return res.status(404).json({ error: "Quiz not found" });
-        }
+      if (!quiz) {
+        return res.status(404).json({ error: "Quiz not found" });
+      }
 
-        // --- Define scoring ---
-        const pointsPerDifficulty: { [key: string]: number } = {
-            "Easy": 10,
-            "Medium": 20,
-            "Hard": 30
-        };
-        const pointsPerAnswer = pointsPerDifficulty[quiz.difficulty] || 10;
+      // --- Define scoring ---
+      const pointsPerDifficulty: { [key: string]: number } = {
+        Easy: 10,
+        Medium: 20,
+        Hard: 30,
+      };
+      const pointsPerAnswer = pointsPerDifficulty[quiz.difficulty] || 10;
 
-        let score = 0;
-        let correctAnswersCount = 0;
+      let score = 0;
+      let correctAnswersCount = 0;
 
-        // --- Get all correct answers for the quiz at once ---
-        const correctAnswers: { question_id: number, answer_id: number }[] = await db.connection.all(
-            `SELECT q.question_id, ao.answer_id
+      // --- Get all correct answers for the quiz at once ---
+      const correctAnswers: { question_id: number; answer_id: number }[] =
+        await db.connection.all(
+          `SELECT q.question_id, ao.answer_id
              FROM QUESTIONS q
              JOIN ANSWER_OPTIONS ao ON q.question_id = ao.question_id
              WHERE q.quiz_id = ? AND ao.is_correct = 1`,
-            [quizId]
+          [quizId]
         );
 
-        const correctAnswerMap = new Map<number, number>();
-        correctAnswers.forEach(row => {
-            correctAnswerMap.set(row.question_id, row.answer_id);
-        });
-        
-        // --- Calculate score ---
-        for (const userAnswer of answers) {
-            if (correctAnswerMap.get(userAnswer.question_id) === userAnswer.answer_id) {
-                score += pointsPerAnswer;
-                correctAnswersCount++;
-            }
+      const correctAnswerMap = new Map<number, number>();
+      correctAnswers.forEach((row) => {
+        correctAnswerMap.set(row.question_id, row.answer_id);
+      });
+
+      // --- Calculate score ---
+      for (const userAnswer of answers) {
+        if (
+          correctAnswerMap.get(userAnswer.question_id) === userAnswer.answer_id
+        ) {
+          score += pointsPerAnswer;
+          correctAnswersCount++;
         }
+      }
 
-        const incorrectAnswersCount = answers.length - correctAnswersCount;
+      const incorrectAnswersCount = answers.length - correctAnswersCount;
 
-        // --- Record the attempt ---
-        await db.connection.run(
-            `INSERT INTO QUIZ_ATTEMPTS (user_id, quiz_id, score, finished_at, total_time_ms)
+      // --- Record the attempt ---
+      await db.connection.run(
+        `INSERT INTO QUIZ_ATTEMPTS (user_id, quiz_id, score, finished_at, total_time_ms)
              VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0)`,
-            [user.id, quizId, score]
-        );
+        [user.id, quizId, score]
+      );
 
-        // --- Update user's total score ---
-        await db.connection.run(
-            `UPDATE USERS SET total_score = total_score + ? WHERE user_id = ?`,
-            [score, user.id]
-        );
-        
-        // --- Recompute ranks ---
-        await recomputeUserRanks();
+      // --- Update user's total score ---
+      await db.connection.run(
+        `UPDATE USERS SET total_score = total_score + ? WHERE user_id = ?`,
+        [score, user.id]
+      );
 
-        res.status(200).json({
-            message: "Quiz submitted successfully!",
-            score: score,
-            correctAnswers: correctAnswersCount,
-            incorrectAnswers: incorrectAnswersCount
-        });
+      // --- Recompute ranks ---
+      await recomputeUserRanks();
 
+      const leaderboard = await db.connection.all(
+        `SELECT u.username, u.total_score, u.rank 
+       FROM USERS u 
+       ORDER BY u.rank ASC LIMIT 10`
+      );
+
+      const currentUserStats = await db.connection.get(
+        `SELECT username, total_score, rank FROM USERS WHERE user_id = ?`,
+        [user.id]
+      );
+
+      res.status(200).json({
+        message: "Quiz submitted successfully!",
+        score: score,
+        correctAnswers: correctAnswersCount,
+        incorrectAnswers: incorrectAnswersCount,
+        leaderboard: leaderboard,
+        currentUserStats: currentUserStats
+      });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Failed to submit quiz answers" });
+      console.error(err);
+      res.status(500).json({ error: "Failed to submit quiz answers" });
     }
-});
+  }
+);
 
 quizzesRouter.get("/:id/leaderboard", async (req, res) => {
   try {

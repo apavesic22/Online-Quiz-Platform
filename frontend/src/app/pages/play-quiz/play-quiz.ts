@@ -37,6 +37,8 @@ export class PlayQuizPage implements OnInit, OnDestroy {
   wrongCount = 0;
   quizFinished = false;
   finalScore = 0;
+  leaderboardData: any = null;
+  currentUserStats: any = null;
 
   user: User | null = null;
   userAnswers: { question_id: number, answer_id: number }[] = [];
@@ -153,11 +155,14 @@ export class PlayQuizPage implements OnInit, OnDestroy {
           this.finalScore = result.score;
           this.correctCount = result.correctAnswers;
           this.wrongCount = result.incorrectAnswers;
+          this.leaderboardData = result.leaderboard;
+          this.currentUserStats = result.currentUserStats;
+
+          
         },
         error: (err) => {
           console.error(err);
           alert('There was an error submitting your answers.');
-          this.router.navigate(['/quizzes']);
         }
       });
     }
