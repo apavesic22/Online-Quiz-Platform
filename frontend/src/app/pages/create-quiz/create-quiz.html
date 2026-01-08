@@ -5,14 +5,21 @@
     <div class="quiz-info-section">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Quiz Title</mat-label>
-        <input matInput formControlName="quiz_name" placeholder="e.g. My Awesome Quiz" />
+        <input
+          matInput
+          formControlName="quiz_name"
+          placeholder="e.g. My Awesome Quiz"
+        />
       </mat-form-field>
 
       <div class="selection-row">
         <mat-form-field appearance="outline">
           <mat-label>Category</mat-label>
           <mat-select formControlName="category_id">
-            <mat-option *ngFor="let cat of categories" [value]="cat.category_id">
+            <mat-option
+              *ngFor="let cat of categories"
+              [value]="cat.category_id"
+            >
               {{ cat.category_name }}
             </mat-option>
           </mat-select>
@@ -30,10 +37,20 @@
     </div>
 
     <div formArrayName="questions">
-      <div *ngFor="let q of questions.controls; let i=index" [formGroupName]="i" class="question-item">
+      <div
+        *ngFor="let q of questions.controls; let i=index"
+        [formGroupName]="i"
+        class="question-item"
+      >
         <div class="question-header">
           <h3>Question {{ i + 1 }}</h3>
-          <button mat-icon-button color="warn" type="button" (click)="questions.removeAt(i)" *ngIf="questions.length > 1">
+          <button
+            mat-icon-button
+            color="warn"
+            type="button"
+            (click)="questions.removeAt(i)"
+            *ngIf="questions.length > 1"
+          >
             <mat-icon>delete</mat-icon>
           </button>
         </div>
@@ -49,13 +66,23 @@
         </mat-radio-group>
 
         <div *ngIf="q.get('type')?.value === 'multiple'">
-          <mat-radio-group formControlName="correct_answer_index" class="options-radio-group">
+          <mat-radio-group
+            formControlName="correct_answer_index"
+            class="options-radio-group"
+          >
             <div formArrayName="options">
-              <div *ngFor="let opt of getOptions(i).controls; let j=index" class="option-row">
+              <div
+                *ngFor="let opt of getOptions(i).controls; let j=index"
+                class="option-row"
+              >
                 <mat-radio-button [value]="j"></mat-radio-button>
                 <mat-form-field appearance="outline" class="flex-grow">
                   <mat-label>Option {{ j + 1 }}</mat-label>
-                  <input matInput [formControlName]="j" placeholder="Enter answer text" />
+                  <input
+                    matInput
+                    [formControlName]="j"
+                    placeholder="Enter answer text"
+                  />
                 </mat-form-field>
               </div>
             </div>
@@ -72,15 +99,33 @@
     </div>
 
     <div class="form-actions">
-      <button mat-stroked-button color="primary" type="button" (click)="addQuestion()">
+      <p
+        *ngIf="questions.length >= 5 && !isVerifiedOrStaff"
+        style="color: orange; font-weight: bold"
+      >
+        <mat-icon>warning</mat-icon>
+        Question limit reached for unverified users.
+      </p>
+
+      <button
+        mat-stroked-button
+        color="primary"
+        type="button"
+        (click)="addQuestion()"
+        [disabled]="questions.length >= 5 && !isVerifiedOrStaff"
+      >
         + Add New Question
       </button>
       <div class="submit-group">
-        <button mat-raised-button color="primary" type="submit" [disabled]="quizForm.invalid">
+        <button mat-button type="button" (click)="cancel()">Cancel</button>
+
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          [disabled]="quizForm.invalid"
+        >
           Finalize Quiz
-        </button>
-        <button mat-button type="button" (click)="router.navigate(['/'])">
-          Cancel
         </button>
       </div>
     </div>

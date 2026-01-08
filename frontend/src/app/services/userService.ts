@@ -23,7 +23,7 @@ export class UserService {
 
   constructor(private http: HttpClient) { }
 
-  getLeaderboard(): Observable<Leaderboard> {
-    return this.http.get<Leaderboard>(`${this.apiUrl}/leaderboard`);
+  getLeaderboard(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/leaderboard`);
   }
 }

@@ -41,7 +41,4 @@ export class QuizzesService {
     return this.http.post(this.apiUrl, quizData);
   }
 
-  getGlobalLeaderboard(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/global-leaderboard`);
-  }
 }

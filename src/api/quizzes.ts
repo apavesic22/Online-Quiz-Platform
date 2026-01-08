@@ -8,17 +8,22 @@ export const quizzesRouter = Router();
 
 quizzesRouter.post("/", async (req, res) => {
   try {
-    if (!db.connection) {
-      return res.status(500).json({ error: "Database not initialized" });
-    }
+    if (!db.connection) return res.status(500).json({ error: "Database not initialized" });
 
     const { quiz_name, category_id, difficulty_id, questions } = req.body;
     const user = req.user as any;
-    const userId = req.isAuthenticated() ? user.user_id : 4;
-    
-    // Check if user is verified (Role ID 3)
-    const isVerified = user?.roles?.includes(3);
 
+    // Check roles: 1=Admin, 2=Management, 3=Verified
+    const isVerifiedOrStaff = user?.roles?.some((r: number) => [1, 2, 3].includes(r));
+
+    // Enforcement: If NOT verified/staff and trying to add more than 5 questions, REJECT
+    if (!isVerifiedOrStaff && questions.length > 5) {
+      return res.status(403).json({ 
+        error: "Unverified users and guests are limited to a maximum of 5 questions." 
+      });
+    }
+
+    const userId = req.isAuthenticated() ? user.user_id : 4;
     await db.connection.run("BEGIN TRANSACTION");
 
     // 1. Insert into QUIZZES table using provided difficulty_id
@@ -36,7 +41,7 @@ quizzesRouter.post("/", async (req, res) => {
 
       // Logic for flexible time limit:
       // Use the value from the question if user is verified, otherwise default to 15
-      const timeLimit = isVerified && q.time_limit ? q.time_limit : 15;
+      const timeLimit = isVerifiedOrStaff && q.time_limit ? q.time_limit : 15;
 
       const qResult = await db.connection.run(
         `INSERT INTO QUESTIONS (quiz_id, question_type_id, question_text, position, time_limit) 
@@ -140,7 +145,7 @@ quizzesRouter.get("/", async (req, res) => {
       ORDER BY q.created_at DESC
       LIMIT ? OFFSET ?
     `,
-      [userId, limit, offset] 
+      [userId, limit, offset]
     );
 
     res.json({
@@ -620,7 +625,7 @@ quizzesRouter.post(
         correctAnswers: correctAnswersCount,
         incorrectAnswers: incorrectAnswersCount,
         leaderboard: leaderboard,
-        currentUserStats: currentUserStats
+        currentUserStats: currentUserStats,
       });
     } catch (err) {
       console.error(err);
@@ -628,33 +633,6 @@ quizzesRouter.post(
     }
   }
 );
-
-quizzesRouter.get("/global-leaderboard", async (req, res) => {
-  try {
-    if (!db.connection) return res.status(500).json({ error: "Database not initialized" });
-
-    // Fetch Top 10 users by total_score
-    const top10 = await db.connection.all(
-      `SELECT username, total_score, rank FROM USERS ORDER BY rank ASC LIMIT 10`
-    );
-
-    let currentUserStats = null;
-    if (req.isAuthenticated()) {
-      const user = req.user as User;
-      currentUserStats = await db.connection.get(
-        `SELECT username, total_score, rank FROM USERS WHERE user_id = ?`,
-        [user.id]
-      );
-    }
-
-    res.json({
-      top10,
-      currentUser: currentUserStats
-    });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch leaderboard" });
-  }
-});
 
 quizzesRouter.get("/:id/leaderboard", async (req, res) => {
   try {
@@ -896,14 +874,17 @@ quizzesRouter.post("/:id/attempts", async (req, res) => {
 
 quizzesRouter.get("/my-stats", async (req, res) => {
   try {
-    if (!db.connection) return res.status(500).json({ error: "Database not initialized" });
-    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    if (!db.connection)
+      return res.status(500).json({ error: "Database not initialized" });
+    if (!req.isAuthenticated())
+      return res.status(401).json({ error: "Unauthorized" });
 
     const user = req.user as User;
     // Important: Use user_id to match your database column name
-    const userId = user.id; 
+    const userId = user.id;
 
-    const personalStats = await db.connection.all(`
+    const personalStats = await db.connection.all(
+      `
       SELECT 
         q.quiz_name,
         qa.score AS your_score,
@@ -915,7 +896,9 @@ quizzesRouter.get("/my-stats", async (req, res) => {
       JOIN CATEGORIES c ON q.category_id = c.category_id
       WHERE qa.user_id = ? 
       ORDER BY qa.finished_at DESC
-    `, [userId]);
+    `,
+      [userId]
+    );
 
     res.json(personalStats);
   } catch (err) {
@@ -926,18 +909,22 @@ quizzesRouter.get("/my-stats", async (req, res) => {
 
 quizzesRouter.post("/:id/like", async (req, res) => {
   try {
-    if (!db.connection) return res.status(500).json({ error: "DB connection lost" });
-    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    if (!db.connection)
+      return res.status(500).json({ error: "DB connection lost" });
+    if (!req.isAuthenticated())
+      return res.status(401).json({ error: "Unauthorized" });
 
     const quizId = Number(req.params.id);
     const user = req.user as any;
-    
+
     // Safety check: try user_id first, then id as a backup
     const userId = user.user_id || user.id;
 
     if (!userId) {
       console.error("User ID is missing from session:", user);
-      return res.status(400).json({ error: "User identity lost. Please re-login." });
+      return res
+        .status(400)
+        .json({ error: "User identity lost. Please re-login." });
     }
 
     // 1. Check if like exists
@@ -963,7 +950,7 @@ quizzesRouter.post("/:id/like", async (req, res) => {
     }
   } catch (err) {
     // This will show exactly what crashed in your terminal/console
-    console.error("SQL Error in Like Route:", err); 
+    console.error("SQL Error in Like Route:", err);
     res.status(500).json({ error: "Internal Server Error during Like toggle" });
   }
 });

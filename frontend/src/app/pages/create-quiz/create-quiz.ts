@@ -42,6 +42,7 @@ export class CreateQuizPage implements OnInit {
   quizForm!: FormGroup;
   categories: any[] = [];
   difficulties: any[] = [];
+  isVerifiedOrStaff = false;
 
   constructor(
     private fb: FormBuilder,
@@ -58,7 +59,11 @@ export class CreateQuizPage implements OnInit {
       difficulty_id: [null, Validators.required],
       questions: this.fb.array([]),
     });
-
+    this.authService.currentUser$.subscribe((user) => {
+      this.isVerifiedOrStaff = !!user?.roles?.some((r) =>
+        [1, 2, 3].includes(r)
+      );
+    });
     this.categoriesService
       .getCategories()
       .subscribe((res) => (this.categories = res));
@@ -76,9 +81,18 @@ export class CreateQuizPage implements OnInit {
     return this.questions.at(qIdx).get('options') as FormArray;
   }
 
-  // inside create-quiz.ts
-
   addQuestion() {
+    const user = (this.authService as any).currentUserSubject?.value;
+    const isVerifiedOrStaff = user?.roles?.some((r: number) =>
+      [1, 2, 3].includes(r)
+    );
+
+    if (!this.isVerifiedOrStaff && this.questions.length >= 5) {
+      alert(
+        'Unverified users and guests are limited to 5 questions. Please verify your account to add more!'
+      );
+      return;
+    }
     const q = this.fb.group({
       text: ['', Validators.required],
       type: ['multiple', Validators.required],
@@ -165,5 +179,9 @@ export class CreateQuizPage implements OnInit {
       },
       error: (err) => alert('Error: ' + (err.error?.error || 'Server error')),
     });
+  }
+
+  cancel(): void {
+    this.router.navigate(['/']); // Redirects to the home page
   }
 }

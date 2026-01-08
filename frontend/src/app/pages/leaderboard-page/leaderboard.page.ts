@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { QuizzesService } from '../../services/quizzesService';
+import { UserService } from '../../services/userService';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
@@ -18,10 +19,10 @@ export class LeaderboardPage implements OnInit {
   dataSource: any[] = [];
   currentUser: any = null;
 
-  constructor(private quizzesService: QuizzesService) {}
+  constructor(private quizzesService: QuizzesService, private userService: UserService) {}
 
   ngOnInit() {
-    this.quizzesService.getGlobalLeaderboard().subscribe({
+    this.userService.getLeaderboard().subscribe({
       next: (res) => {
         this.dataSource = res.top10;
         this.currentUser = res.currentUser;

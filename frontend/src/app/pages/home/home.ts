@@ -7,37 +7,94 @@ import { QuizzesService } from '../../services/quizzesService';
 import { Quiz } from '../../models/quiz';
 import { HttpClient } from '@angular/common/http';
 import { MatIcon } from '@angular/material/icon';
+import { AuthService } from '../../services/auth';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'home-page',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, RouterModule, MatIcon],
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatButtonModule,
+    RouterModule,
+    MatIcon,
+  ],
   templateUrl: './home.html',
-  styleUrls: ['./home.scss']
+  styleUrls: ['./home.scss'],
 })
 export class HomePage implements OnInit {
-  quizzes: Quiz[] = [];
+  quizzes: any[] = [];
   loading = true;
-  
+  isLoggedIn = false;
+  private authSub!: Subscription;
+
   // Pagination variables
   currentPage = 1;
   totalPages = 1;
   pages: number[] = [];
 
-  constructor(private quizzesService: QuizzesService, private http: HttpClient) {}
+  constructor(
+    private quizzesService: QuizzesService,
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
+    // Subscribe to the currentUser$ observable from your AuthService
+    this.authService.currentUser$.subscribe((user) => {
+      const previouslyLoggedIn = this.isLoggedIn;
+      this.isLoggedIn = !!user;
+
+      // If transition from Logged In -> Logged Out happens, reset UI state
+      if (previouslyLoggedIn && !this.isLoggedIn) {
+        this.clearLocalLikes();
+      }
+    });
+
+    // Call whoami to trigger the initial auth check
+    this.authService.whoami().subscribe();
+
     this.loadQuizzes();
+  }
+
+  ngOnDestroy(): void {
+    if (this.authSub) {
+      this.authSub.unsubscribe();
+    }
+  }
+
+  clearLocalLikes(): void {
+    this.quizzes = this.quizzes.map((quiz) => ({
+      ...quiz,
+      user_has_liked: 0,
+    }));
+  }
+
+  checkLoginStatus(): void {
+    this.http.get('/api/auth/').subscribe({
+      next: (user) => {
+        this.isLoggedIn = !!user;
+      },
+      error: () => {
+        this.isLoggedIn = false;
+      },
+    });
   }
 
   loadQuizzes(page: number = 1): void {
     this.loading = true;
     this.currentPage = page;
-    
+
     // Pass the page to your service (Ensure your service accepts page as an argument)
     this.quizzesService.getQuizzes(this.currentPage).subscribe({
-      next: res => {
+      next: (res) => {
         this.quizzes = res.data;
+
+        if (!this.isLoggedIn) {
+          this.clearLocalLikes();
+        }
+
         this.totalPages = res.totalPages;
         this.generatePageNumbers();
         this.loading = false;
@@ -45,7 +102,7 @@ export class HomePage implements OnInit {
       },
       error: () => {
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -57,10 +114,14 @@ export class HomePage implements OnInit {
   }
 
   toggleLike(quiz: any) {
-  this.http.post<any>(`/api/quizzes/${quiz.quiz_id}/like`, {})
-    .subscribe(res => {
-      quiz.user_has_liked = res.liked ? 1 : 0;
-      quiz.likes = res.liked ? quiz.likes + 1 : quiz.likes - 1;
-    });
-}
+    if (!this.isLoggedIn) return;
+
+    this.http
+      .post<any>(`/api/quizzes/${quiz.quiz_id}/like`, {})
+      .subscribe((res) => {
+        // Backend returns boolean {liked: true/false}, we convert back to 1/0 for the template
+        quiz.user_has_liked = res.liked ? 1 : 0;
+        quiz.likes = res.liked ? (quiz.likes || 0) + 1 : (quiz.likes || 1) - 1;
+      });
+  }
 }
