@@ -5,11 +5,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
 import { QuizzesService } from '../../services/quizzesService';
 import { Quiz } from '../../models/quiz';
+import { HttpClient } from '@angular/common/http';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'home-page',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, RouterModule],
+  imports: [CommonModule, MatCardModule, MatButtonModule, RouterModule, MatIcon],
   templateUrl: './home.html',
   styleUrls: ['./home.scss']
 })
@@ -22,7 +24,7 @@ export class HomePage implements OnInit {
   totalPages = 1;
   pages: number[] = [];
 
-  constructor(private quizzesService: QuizzesService) {}
+  constructor(private quizzesService: QuizzesService, private http: HttpClient) {}
 
   ngOnInit(): void {
     this.loadQuizzes();
@@ -53,4 +55,12 @@ export class HomePage implements OnInit {
       this.pages.push(i);
     }
   }
+
+  toggleLike(quiz: any) {
+  this.http.post<any>(`/api/quizzes/${quiz.quiz_id}/like`, {})
+    .subscribe(res => {
+      quiz.user_has_liked = res.liked ? 1 : 0;
+      quiz.likes = res.liked ? quiz.likes + 1 : quiz.likes - 1;
+    });
+}
 }

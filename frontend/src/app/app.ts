@@ -9,6 +9,7 @@ import { AuthService } from './services/auth';
 import { User } from './models/user';
 import { LoginDialog } from './dialogs/login/login';
 import { Router } from '@angular/router';
+import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'app-root',
@@ -20,6 +21,7 @@ import { Router } from '@angular/router';
     MatDialogModule,
     MatIconModule,
     MatMenuModule,
+    MatDividerModule
   ],
   templateUrl: './app.html',
   styleUrls: ['./app.scss'],

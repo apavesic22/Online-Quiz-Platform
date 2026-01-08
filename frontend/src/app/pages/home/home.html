@@ -7,18 +7,41 @@
     <div class="quiz-grid">
       @for (quiz of quizzes; track quiz.quiz_id) {
         <mat-card class="quiz-card">
-          <mat-card-title>{{ quiz.quiz_name }}</mat-card-title>
-          <mat-card-subtitle>
-            {{ quiz.category_name }} · {{ quiz.difficulty }}
-          </mat-card-subtitle>
+          <mat-card-header>
+            <mat-card-title>{{ quiz.quiz_name }}</mat-card-title>
+            <mat-card-subtitle>
+              {{ quiz.category_name }} · {{ quiz.difficulty }}
+            </mat-card-subtitle>
+          </mat-card-header>
 
           <mat-card-content>
-            <p>Questions: {{ quiz.question_count }}</p>
-            <p>Question duration: {{ quiz.duration || 15 }} seconds</p>
-            <p>By: {{ quiz.creator }}</p>
+            <div class="info-row">
+              <mat-icon>quiz</mat-icon>
+              <span>Questions: {{ quiz.question_count }}</span>
+            </div>
+            <div class="info-row">
+              <mat-icon>timer</mat-icon>
+              <span>{{ quiz.duration || 15 }}s per question</span>
+            </div>
+            <div class="info-row">
+              <mat-icon>person</mat-icon>
+              <span>By: {{ quiz.creator }}</span>
+            </div>
           </mat-card-content>
 
-          <mat-card-actions>
+          <mat-card-actions class="card-footer">
+            <div class="like-section">
+              <button mat-icon-button 
+                      (click)="toggleLike(quiz); $event.stopPropagation()" 
+                      [color]="quiz.user_has_liked ? 'warn' : ''"
+                      matTooltip="Like this quiz">
+                <mat-icon>{{ quiz.user_has_liked ? 'favorite' : 'favorite_border' }}</mat-icon>
+              </button>
+              <span class="like-count">{{ quiz.likes || 0 }}</span>
+            </div>
+
+            <span class="spacer"></span>
+
             <button mat-raised-button color="primary" [routerLink]="['/play', quiz.quiz_id]">
               Play
             </button>
@@ -29,27 +52,20 @@
 
     @if (totalPages > 1) {
       <div class="pagination-container">
-        <button 
-          mat-button 
-          (click)="loadQuizzes(currentPage - 1)" 
-          [disabled]="currentPage === 1">
+        <button mat-button (click)="loadQuizzes(currentPage - 1)" [disabled]="currentPage === 1">
           Previous
         </button>
 
         @for (p of pages; track p) {
-          <button 
-            mat-mini-fab 
-            [color]="currentPage === p ? 'primary' : ''" 
-            (click)="loadQuizzes(p)"
-            class="page-num-btn">
+          <button mat-mini-fab 
+                  [color]="currentPage === p ? 'primary' : ''" 
+                  (click)="loadQuizzes(p)"
+                  class="page-num-btn">
             {{ p }}
           </button>
         }
 
-        <button 
-          mat-button 
-          (click)="loadQuizzes(currentPage + 1)" 
-          [disabled]="currentPage === totalPages">
+        <button mat-button (click)="loadQuizzes(currentPage + 1)" [disabled]="currentPage === totalPages">
           Next
         </button>
       </div>

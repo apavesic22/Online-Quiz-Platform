@@ -1,0 +1,37 @@
+<mat-card-content>
+  <table mat-table [dataSource]="dataSource" class="mat-elevation-z0" style="width: 100%;">
+    
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef> Quiz </th>
+      <td mat-cell *matCellDef="let stat"> {{stat.quiz_name}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="category">
+      <th mat-header-cell *matHeaderCellDef> Category </th>
+      <td mat-cell *matCellDef="let stat"> 
+        <span class="category-badge">{{stat.category_name}}</span> 
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="score">
+      <th mat-header-cell *matHeaderCellDef> Score </th>
+      <td mat-cell *matCellDef="let stat"> 
+        <strong>{{stat.your_score}}</strong> pts
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="date">
+      <th mat-header-cell *matHeaderCellDef> Played On </th>
+      <td mat-cell *matCellDef="let stat"> {{stat.finished_at | date:'short'}} </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+
+  @if (dataSource.length === 0) {
+    <div class="no-data">
+      <p>You haven't played any quizzes yet! Go to Home to start.</p>
+    </div>
+  }
+</mat-card-content>

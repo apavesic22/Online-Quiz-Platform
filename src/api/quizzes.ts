@@ -96,6 +96,9 @@ quizzesRouter.get("/", async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 10, 100);
     const offset = (page - 1) * limit;
 
+    // Get current user ID to check for "user_has_liked" status
+    const userId = req.isAuthenticated() ? (req.user as any).user_id : 0;
+
     const totalRow = await db.connection.get<{ count: number }>(`
       SELECT COUNT(*) AS count FROM QUIZZES
     `);
@@ -107,7 +110,7 @@ quizzesRouter.get("/", async (req, res) => {
       return res.status(204).send();
     }
 
-    // ---- paginated data ----
+    // ---- paginated data with likes and user status ----
     const quizzes = await db.connection.all(
       `
       SELECT
@@ -117,13 +120,17 @@ quizzesRouter.get("/", async (req, res) => {
         q.duration,
         q.is_customizable,
         q.created_at,
-
         c.category_name,
         d.difficulty,
+        
+        CASE WHEN u.user_id = 4 THEN 'Guest' ELSE u.username END AS creator,
 
-        u.username AS creator,
+        COUNT(ql.user_id) AS likes,
 
-        COUNT(ql.user_id) AS likes
+        MAX(CASE WHEN ql.user_id = ? THEN 1 ELSE 0 END) AS user_has_liked,
+
+        (SELECT time_limit FROM QUESTIONS WHERE quiz_id = q.quiz_id LIMIT 1) as question_duration
+
       FROM QUIZZES q
       JOIN CATEGORIES c ON c.category_id = q.category_id
       JOIN QUIZ_DIFFICULTIES d ON d.id = q.difficulty_id
@@ -133,7 +140,7 @@ quizzesRouter.get("/", async (req, res) => {
       ORDER BY q.created_at DESC
       LIMIT ? OFFSET ?
     `,
-      [limit, offset]
+      [userId, limit, offset] 
     );
 
     res.json({
@@ -148,7 +155,6 @@ quizzesRouter.get("/", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch quizzes" });
   }
 });
-
 quizzesRouter.get("/category/:category", async (req, res) => {
   try {
     if (!db.connection) {
@@ -885,5 +891,79 @@ quizzesRouter.post("/:id/attempts", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to start quiz attempt" });
+  }
+});
+
+quizzesRouter.get("/my-stats", async (req, res) => {
+  try {
+    if (!db.connection) return res.status(500).json({ error: "Database not initialized" });
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+
+    const user = req.user as User;
+    // Important: Use user_id to match your database column name
+    const userId = user.id; 
+
+    const personalStats = await db.connection.all(`
+      SELECT 
+        q.quiz_name,
+        qa.score AS your_score,
+        qa.finished_at,
+        c.category_name,
+        q.question_count as total_questions
+      FROM QUIZ_ATTEMPTS qa
+      JOIN QUIZZES q ON qa.quiz_id = q.quiz_id
+      JOIN CATEGORIES c ON q.category_id = c.category_id
+      WHERE qa.user_id = ? 
+      ORDER BY qa.finished_at DESC
+    `, [userId]);
+
+    res.json(personalStats);
+  } catch (err) {
+    console.error("Stats Error:", err);
+    res.status(500).json({ error: "Failed to fetch your statistics" });
+  }
+});
+
+quizzesRouter.post("/:id/like", async (req, res) => {
+  try {
+    if (!db.connection) return res.status(500).json({ error: "DB connection lost" });
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+
+    const quizId = Number(req.params.id);
+    const user = req.user as any;
+    
+    // Safety check: try user_id first, then id as a backup
+    const userId = user.user_id || user.id;
+
+    if (!userId) {
+      console.error("User ID is missing from session:", user);
+      return res.status(400).json({ error: "User identity lost. Please re-login." });
+    }
+
+    // 1. Check if like exists
+    const existing = await db.connection.get(
+      "SELECT * FROM QUIZ_LIKES WHERE user_id = ? AND quiz_id = ?",
+      [userId, quizId]
+    );
+
+    if (existing) {
+      // 2. Remove like
+      await db.connection.run(
+        "DELETE FROM QUIZ_LIKES WHERE user_id = ? AND quiz_id = ?",
+        [userId, quizId]
+      );
+      return res.json({ liked: false });
+    } else {
+      // 3. Add like
+      await db.connection.run(
+        "INSERT INTO QUIZ_LIKES (user_id, quiz_id) VALUES (?, ?)",
+        [userId, quizId]
+      );
+      return res.json({ liked: true });
+    }
+  } catch (err) {
+    // This will show exactly what crashed in your terminal/console
+    console.error("SQL Error in Like Route:", err); 
+    res.status(500).json({ error: "Internal Server Error during Like toggle" });
   }
 });

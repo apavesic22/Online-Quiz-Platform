@@ -25,6 +25,12 @@ export const routes: Route[] = [
     title: 'Leaderboard',
   },
   {
+    path: 'my-stats',
+    loadComponent: () =>
+      import('./components/my-stats/my-stats').then((m) => m.MyStatsComponent),
+    title: 'My Stats',
+  },
+  {
     path: '**',
     redirectTo: '',
   },

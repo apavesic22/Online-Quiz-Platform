@@ -9,4 +9,5 @@ export interface Quiz {
   difficulty: string;
   creator: string;
   likes: number;
+  user_has_liked: boolean;
 }
