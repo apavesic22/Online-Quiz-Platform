@@ -57,12 +57,21 @@ export class CreateQuizPage implements OnInit {
       quiz_name: ['', [Validators.required, Validators.minLength(3)]],
       category_id: [null, Validators.required],
       difficulty_id: [null, Validators.required],
+      duration: [
+        15,
+        [Validators.required, Validators.min(1), Validators.max(60)],
+      ],
       questions: this.fb.array([]),
     });
     this.authService.currentUser$.subscribe((user) => {
       this.isVerifiedOrStaff = !!user?.roles?.some((r) =>
         [1, 2, 3].includes(r)
       );
+      if (!this.isVerifiedOrStaff) {
+        this.quizForm.get('duration')?.disable();
+      } else {
+        this.quizForm.get('duration')?.enable();
+      }
     });
     this.categoriesService
       .getCategories()
@@ -151,9 +160,10 @@ export class CreateQuizPage implements OnInit {
       return;
     }
 
-    const rawData = this.quizForm.value;
+    const rawData = this.quizForm.getRawValue();
     const finalData = {
       ...rawData,
+      duration: Number(rawData.duration),
       questions: rawData.questions.map((q: any) => {
         const actualAnswer =
           q.type === 'multiple'
@@ -177,7 +187,10 @@ export class CreateQuizPage implements OnInit {
         );
         this.router.navigate(['/']);
       },
-      error: (err) => alert('Error: ' + (err.error?.error || 'Server error')),
+      error: (err) => {
+        console.error('Frontend Error:', err);
+        alert('Unable to finalize quiz. Check server console for details.');
+      },
     });
   }
 

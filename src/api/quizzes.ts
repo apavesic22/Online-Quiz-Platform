@@ -8,30 +8,49 @@ export const quizzesRouter = Router();
 
 quizzesRouter.post("/", async (req, res) => {
   try {
-    if (!db.connection) return res.status(500).json({ error: "Database not initialized" });
+    if (!db.connection)
+      return res.status(500).json({ error: "Database not initialized" });
 
-    const { quiz_name, category_id, difficulty_id, questions } = req.body;
+    const { quiz_name, category_id, difficulty_id, questions, duration } =
+      req.body;
     const user = req.user as any;
 
     // Check roles: 1=Admin, 2=Management, 3=Verified
-    const isVerifiedOrStaff = user?.roles?.some((r: number) => [1, 2, 3].includes(r));
+    const isVerifiedOrStaff = user?.roles?.some((r: number) =>
+      [1, 2, 3].includes(r)
+    );
+
+    const finalDuration = isVerifiedOrStaff
+      ? Math.min(Math.max(duration || 15, 1), 60)
+      : 15;
 
     // Enforcement: If NOT verified/staff and trying to add more than 5 questions, REJECT
     if (!isVerifiedOrStaff && questions.length > 5) {
-      return res.status(403).json({ 
-        error: "Unverified users and guests are limited to a maximum of 5 questions." 
+      return res.status(403).json({
+        error:
+          "Unverified users and guests are limited to a maximum of 5 questions.",
       });
     }
 
-    const userId = req.isAuthenticated() ? user.user_id : 4;
+    const userId = req.isAuthenticated()
+      ? user.user_id || user.id // Tries user_id first, then id
+      : 4;
     await db.connection.run("BEGIN TRANSACTION");
 
     // 1. Insert into QUIZZES table using provided difficulty_id
     const quizResult = await db.connection.run(
       `INSERT INTO QUIZZES 
-      (user_id, category_id, difficulty_id, quiz_name, question_count, duration, is_customizable) 
-      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [userId, category_id, difficulty_id, quiz_name, questions.length, 15, 0]
+  (user_id, category_id, difficulty_id, quiz_name, question_count, duration, is_customizable) 
+  VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        userId, // This is now guaranteed to have a value
+        category_id,
+        difficulty_id,
+        quiz_name,
+        questions.length,
+        finalDuration,
+        0,
+      ]
     );
     const quizId = quizResult.lastID;
 
@@ -72,6 +91,7 @@ quizzesRouter.post("/", async (req, res) => {
     await db.connection.run("COMMIT");
     res.status(201).json({ message: "Quiz created" });
   } catch (err) {
+    console.error("Database Error:", err);
     if (db.connection) await db.connection.run("ROLLBACK");
     res.status(500).json({ error: "Failed to finalize quiz" });
   }
