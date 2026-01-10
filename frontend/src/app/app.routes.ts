@@ -31,6 +31,12 @@ export const routes: Route[] = [
     title: 'My Stats',
   },
   {
+    path: 'profile',
+    loadComponent: () =>
+      import('./pages/profile/profile').then((m) => m.ProfilePage),
+    title: 'Profile',
+  },
+  {
     path: '**',
     redirectTo: '',
   },

@@ -5,4 +5,5 @@ export interface User {
   rank?: number;
   role_id: number;
   verified: number;
+  email: string;
 }

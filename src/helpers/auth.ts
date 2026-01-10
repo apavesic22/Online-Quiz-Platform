@@ -150,13 +150,15 @@ async function findUserById(id: number): Promise<User | undefined> {
     username: string;
     password_hash: string;
     role_id: number;
+    email: string;
   }>(
     `
     SELECT
       u.user_id,
       u.username,
       u.password_hash,
-      u.role_id
+      u.role_id,
+      u.email
     FROM USERS u
     WHERE u.user_id = ?
   `,
@@ -170,6 +172,7 @@ async function findUserById(id: number): Promise<User | undefined> {
     username: row.username,
     password: row.password_hash,
     roles: [row.role_id],
+    email: row.email,
     total_score: 0,
     rank: 0,
   };
@@ -183,13 +186,15 @@ async function findUserByUsername(username: string): Promise<User | undefined> {
     username: string;
     password_hash: string;
     role_id: number;
+    email: string;
   }>(
     `
     SELECT
       u.user_id,
       u.username,
       u.password_hash,
-      u.role_id
+      u.role_id,
+      u.email
     FROM USERS u
     WHERE u.username = ?
   `,
@@ -203,6 +208,7 @@ async function findUserByUsername(username: string): Promise<User | undefined> {
     username: row.username,
     password: row.password_hash,
     roles: [row.role_id], // single role → array
+    email: row.email,
     total_score: 0,
     rank: 0,
   };
@@ -250,6 +256,7 @@ authRouter.post(
       message: "Logged in successfully",
       username: authReq.user?.username,
       roles: authReq.user?.roles,
+      email: authReq.user?.email,
     });
   }
 );
@@ -285,14 +292,15 @@ authRouter.delete("", (req: Request, res: Response, next: NextFunction) => {
  *
  * @apiSuccess {String|null} username Authenticated user's username or null if not logged in
  * @apiSuccess {Number[]|null} roles List of user's role IDs or null if not logged in
+ * @apiSuccess {String|null} email User's email address or null if not logged in
  *
  * @apiUse HttpError
  */
 authRouter.get("", (req: Request, res: Response) => {
   if (req.isAuthenticated()) {
     const user = req.user as User;
-    res.json({ username: user.username, roles: user.roles });
+    res.json({ username: user.username, roles: user.roles, email: user.email });
   } else {
-    res.json({ username: null, roles: null });
+    res.json({ username: null, roles: null, email: null });
   }
 });

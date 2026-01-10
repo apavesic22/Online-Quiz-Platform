@@ -12,7 +12,6 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  // Added helper to check login status for the 5-question limit
   isLoggedIn(): boolean {
     return this.currentUserSubject.value !== null;
   }
