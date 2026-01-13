@@ -49,6 +49,12 @@ export const routes: Route[] = [
     title: 'Manage Categories',
   },
   {
+    path: 'manage-users',
+    loadComponent: () =>
+      import('./pages/manage-users/manage-users').then((m) => m.ManageUsersPage),
+    title: 'Manage Users',
+  },
+  {
     path: '**',
     redirectTo: '',
   },

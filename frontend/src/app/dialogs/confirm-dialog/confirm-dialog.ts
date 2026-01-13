@@ -11,10 +11,14 @@ import { MatButtonModule } from '@angular/material/button';
     <mat-dialog-content>{{ data.message }}</mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button [mat-dialog-close]="false">Cancel</button>
-      <button mat-raised-button color="warn" [mat-dialog-close]="true">Delete</button>
+      <button mat-raised-button 
+              [color]="data.color || 'warn'" 
+              [mat-dialog-close]="true">
+        {{ data.buttonText || 'Confirm' }}
+      </button>
     </mat-dialog-actions>
   `
 })
 export class ConfirmDialogComponent {
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { message: string }) {}
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { message: string, buttonText?: string, color?: string }) {}
 }
