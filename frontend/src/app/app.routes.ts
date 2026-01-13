@@ -37,6 +37,12 @@ export const routes: Route[] = [
     title: 'Profile',
   },
   {
+    path: 'manage-suggestions',
+    loadComponent: () =>
+      import('./pages/manage-suggestions/manage-suggestions').then((m) => m.ManageSuggestionsPage),
+    title: 'Manage Suggestions',
+  },
+  {
     path: '**',
     redirectTo: '',
   },

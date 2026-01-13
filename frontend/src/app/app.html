@@ -16,12 +16,17 @@
       <span>Leaderboard</span>
     </button>
 
-    @if (user.role_id == 3) {
+    @if (isLoggedIn && user.role_id == 3) {
     <button mat-button (click)="openSuggestionDialog()">
       <mat-icon>lightbulb</mat-icon>
       <span>Suggestions</span>
     </button>
     }
+    @if (isLoggedIn && user && (user.role_id === 1 || user.role_id === 2)) {
+    <button mat-button routerLink="/manage-suggestions">
+      <span>Manage Suggestions</span>
+    </button>
+  }
 
     <button mat-button [matMenuTriggerFor]="userMenu" class="user-button">
       @if (user.role_id === 1) {
