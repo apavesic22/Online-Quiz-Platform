@@ -567,7 +567,8 @@ quizzesRouter.post(
       }
 
       const user = req.user as User;
-      const answers = req.body.answers; // Expects an array of { question_id: number, answer_id: number }
+      const answers = req.body.answers; 
+      const performerName = user?.username || "Unknown User";
 
       if (!Array.isArray(answers)) {
         return res
@@ -576,8 +577,8 @@ quizzesRouter.post(
       }
 
       // --- Get quiz and difficulty ---
-      const quiz = await db.connection.get<{ difficulty: string }>(
-        `SELECT d.difficulty 
+      const quiz = await db.connection.get<{ difficulty: string, quiz_name: string}>(
+        `SELECT q.quiz_name, d.difficulty 
              FROM QUIZZES q
              JOIN QUIZ_DIFFICULTIES d ON q.difficulty_id = d.id
              WHERE q.quiz_id = ?`,
@@ -588,7 +589,6 @@ quizzesRouter.post(
         return res.status(404).json({ error: "Quiz not found" });
       }
 
-      // --- Define scoring ---
       const pointsPerDifficulty: { [key: string]: number } = {
         Easy: 10,
         Medium: 20,
@@ -631,6 +631,14 @@ quizzesRouter.post(
         `INSERT INTO QUIZ_ATTEMPTS (user_id, quiz_id, score, finished_at, total_time_ms)
              VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0)`,
         [user.id, quizId, score]
+      );
+
+      const logMessage = `${performerName} finished a quiz: ${quiz.quiz_name} with ${score} points`;
+
+      await db.connection.run(
+        `INSERT INTO LOGS (action_performer, action, time_of_action, user_id, quiz_id) 
+         VALUES (?, ?, CURRENT_TIMESTAMP, ?, ?)`,
+        [performerName, logMessage, user.id, quizId]
       );
 
       // --- Update user's total score ---
