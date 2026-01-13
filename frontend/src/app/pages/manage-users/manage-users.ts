@@ -7,16 +7,34 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ConfirmDialogComponent } from '../../dialogs/confirm-dialog/confirm-dialog';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { MatFormField, MatLabel } from '@angular/material/input';
+import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 
 @Component({
   selector: 'app-manage-users',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatButtonModule, MatIconModule],
+  imports: [
+    CommonModule,
+    MatTableModule,
+    MatButtonModule,
+    MatIconModule,
+    MatFormField,
+    MatLabel,
+    MatPaginator
+  ],
   templateUrl: './manage-users.html',
   styleUrls: ['./manage-users.scss'],
 })
 export class ManageUsersPage implements OnInit {
   users: any[] = [];
+  searchQuery: string = '';
+  totalUsers = 0;
+  currentPage = 0;
+  pageSize = 10;
+  loading = false;
+  private searchSubject = new Subject<string>();
+
   displayedColumns: string[] = [
     'username',
     'email',
@@ -24,7 +42,6 @@ export class ManageUsersPage implements OnInit {
     'status',
     'actions',
   ];
-  loading = false;
 
   constructor(
     private http: HttpClient,
@@ -34,49 +51,78 @@ export class ManageUsersPage implements OnInit {
 
   ngOnInit() {
     this.loadUsers();
+
+    this.searchSubject
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe((searchText) => {
+        this.searchQuery = searchText;
+        this.currentPage = 0; // Reset to first page on new search
+        this.loadUsers();
+      });
+  }
+
+  onPageChange(event: PageEvent) {
+    this.currentPage = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.loadUsers();
+  }
+
+  onSearch(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.searchSubject.next(value);
   }
 
   loadUsers() {
     this.loading = true;
-    // Your backend uses pagination by default
-    this.http.get<any>('/api/users?limit=100').subscribe({
+    const pageForApi = this.currentPage + 1;
+    const url = `/api/users?page=${pageForApi}&limit=${this.pageSize}&search=${this.searchQuery}`;
+    
+    this.http.get<any>(url).subscribe({
       next: (res) => {
-        this.users = res.data; // Backend returns { data: users[] }
+        this.users = res.data; // Assign from 'data' property
+        this.totalUsers = res.total; // Update total count for paginator
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => this.loading = false
     });
   }
 
-toggleVerification(user: any) {
-  // Determine current state: 1 is verified (true), 0 is unverified (false)
-  const isCurrentlyVerified = user.verified === 1; 
-  
-  // Set the text for the dialog based on what we WANT to do
-  const actionText = isCurrentlyVerified ? 'unverify' : 'verify';
-  const buttonColor = isCurrentlyVerified ? 'warn' : 'primary';
-  const buttonLabel = isCurrentlyVerified ? 'Unverify' : 'Verify';
+  toggleVerification(user: any) {
+    const isCurrentlyVerified = user.verified === 1;
 
-  const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-    data: { 
-      message: `Are you sure you want to ${actionText} ${user.username}?`,
-      buttonText: buttonLabel, // Pass a custom label to avoid "Delete" showing up
-      color: buttonColor
-    }
-  });
+    const actionText = isCurrentlyVerified ? 'unverify' : 'verify';
+    const buttonColor = isCurrentlyVerified ? 'warn' : 'primary';
+    const buttonLabel = isCurrentlyVerified ? 'Unverify' : 'Verify';
 
-  dialogRef.afterClosed().subscribe(confirmed => {
-    if (confirmed) {
-      // If they were verified (1), set to 0. If they were 0, set to 1.
-      const newStatus = isCurrentlyVerified ? 0 : 1;
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        message: `Are you sure you want to ${actionText} ${user.username}?`,
+        buttonText: buttonLabel, 
+        color: buttonColor,
+      },
+    });
 
-      this.http.put(`/api/users/${user.username}`, { verified: newStatus }).subscribe({
-        next: () => {
-          user.verified = newStatus;
-          this.snackBar.open(`User ${user.username} is now ${newStatus === 1 ? 'verified' : 'unverified'}.`, 'OK', { duration: 2000 });
-        },
-        error: (err) => this.snackBar.open(err.error.error || 'Update failed', 'Close')
-      });
-    }
-  });
-}}
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        const newStatus = isCurrentlyVerified ? 0 : 1;
+
+        this.http
+          .put(`/api/users/${user.username}`, { verified: newStatus })
+          .subscribe({
+            next: () => {
+              user.verified = newStatus;
+              this.snackBar.open(
+                `User ${user.username} is now ${
+                  newStatus === 1 ? 'verified' : 'unverified'
+                }.`,
+                'OK',
+                { duration: 2000 }
+              );
+            },
+            error: (err) =>
+              this.snackBar.open(err.error.error || 'Update failed', 'Close'),
+          });
+      }
+    });
+  }
+}
