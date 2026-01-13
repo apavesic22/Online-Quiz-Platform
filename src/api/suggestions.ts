@@ -32,41 +32,29 @@ suggestionsRouter.post("/", async (req, res) => {
 
 suggestionsRouter.get("/", async (req, res) => {
   try {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
 
     const user = req.user as any;
-    // Management (2) or Admin (1) check
     const isAdminOrManagement = user.roles?.includes(1) || user.roles?.includes(2);
 
-    if (!isAdminOrManagement) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
+    if (!isAdminOrManagement) return res.status(403).json({ error: "Forbidden" });
 
-    if (!db.connection) {
-      return res.status(500).json({ error: "Database not initialized" });
-    }
-
-    // This query links the user_id in SUGGESTIONS to the USERS table to get the name
-    const suggestions = await db.connection.all(
+    // Join once for the submitter (u1) and once for the reviewer (u2)
+    const suggestions = await db.connection?.all(
       `
       SELECT 
-        s.suggestion_id, 
-        s.user_id, 
-        s.title, 
-        s.description, 
-        s.status,
-        u.username 
+        s.*, 
+        u1.username, 
+        u2.username AS reviewer_username
       FROM SUGGESTIONS s
-      JOIN USERS u ON s.user_id = u.user_id
+      LEFT JOIN USERS u1 ON s.user_id = u1.user_id
+      LEFT JOIN USERS u2 ON s.reviewer_id = u2.user_id
       ORDER BY s.suggestion_id DESC
       `
     );
 
     res.status(200).json(suggestions);
   } catch (err) {
-    console.error("Failed to fetch suggestions:", err);
     res.status(500).json({ error: "Failed to fetch suggestions" });
   }
 });
@@ -78,36 +66,52 @@ suggestionsRouter.patch("/:id/status", async (req, res) => {
     }
 
     const user = req.user as any;
-    const isAdminOrManagement = user.roles?.includes(2);
+    const isAdminOrManagement = user.roles?.includes(1) || user.roles?.includes(2);
 
     if (!isAdminOrManagement) {
       return res.status(403).json({ error: "Forbidden: Management only" });
     }
 
     const suggestionId = req.params.id;
-    const { status } = req.body;
+    const { status } = req.body; 
 
-    const validStatuses = ['pending', 'approved', 'rejected'];
+    // 1. Allow 'pending' in the validation list
+    const validStatuses = ['approved', 'rejected', 'pending'];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: "Invalid status value" });
+      return res.status(400).json({ error: "Invalid status" });
     }
 
     if (!db.connection) {
       return res.status(500).json({ error: "Database not initialized" });
     }
 
+    // 2. Determine if we are resetting or reviewing
+    const isReset = status === 'pending';
+    const reviewerId = isReset ? null : (user.user_id || user.id);
+    const reviewedAt = isReset ? null : new Date().toISOString();
+
+    // 3. Update the database
+    // If it's a reset, reviewer_id and reviewed_at become NULL
     const result = await db.connection.run(
-      `UPDATE SUGGESTIONS SET status = ? WHERE suggestion_id = ?`,
-      [status, suggestionId]
+      `UPDATE SUGGESTIONS 
+       SET status = ?, 
+           reviewed_at = ?, 
+           reviewer_id = ? 
+       WHERE suggestion_id = ?`,
+      [status, reviewedAt, reviewerId, suggestionId]
     );
 
     if (result.changes === 0) {
       return res.status(404).json({ error: "Suggestion not found" });
     }
 
-    res.status(200).json({ message: `Suggestion marked as ${status}` });
+    res.status(200).json({ 
+      message: `Status updated to ${status}`,
+      status: status
+    });
+
   } catch (err) {
-    console.error("Failed to update status:", err);
+    console.error("Failed to update suggestion status:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });

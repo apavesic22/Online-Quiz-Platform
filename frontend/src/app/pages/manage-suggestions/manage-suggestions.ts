@@ -10,9 +10,16 @@ import { MatDivider } from '@angular/material/divider';
 @Component({
   selector: 'app-manage-suggestions',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatChipsModule,MatDivider],
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatChipsModule,
+    MatDivider,
+  ],
   templateUrl: './manage-suggestions.html',
-  styleUrls: ['./manage-suggestions.scss']
+  styleUrls: ['./manage-suggestions.scss'],
 })
 export class ManageSuggestionsPage implements OnInit {
   suggestions: any[] = [];
@@ -28,30 +35,33 @@ export class ManageSuggestionsPage implements OnInit {
     this.loading = true;
     this.http.get<any[]>('/api/suggestions').subscribe({
       next: (data) => {
-        this.suggestions = data.map(s => ({
-          ...s,
-          status: 'pending' 
-        }));
+        this.suggestions = data;
         this.loading = false;
-        console.log('Suggestions fetched:', this.suggestions);
       },
       error: (err) => {
-        console.error('Failed to fetch suggestions from database', err);
+        console.error('Failed to fetch', err);
         this.loading = false;
-      }
+      },
     });
   }
-
-updateStatus(suggestion: any, newStatus: 'approved' | 'rejected') {
-  this.http.patch(`/api/suggestions/${suggestion.suggestion_id}/status`, { 
-    status: newStatus 
-  }).subscribe({
-    next: () => {
-      suggestion.status = newStatus;
-      console.log(`Successfully updated suggestion ${suggestion.suggestion_id} to ${newStatus}`);
-    },
-    error: (err) => {
-      console.error('Failed to update status in database', err);
-    }
-  });
-}}
+  updateStatus(
+    suggestion: any,
+    newStatus: 'approved' | 'rejected' | 'pending'
+  ) {
+    this.http
+      .patch(`/api/suggestions/${suggestion.suggestion_id}/status`, {
+        status: newStatus,
+      })
+      .subscribe({
+        next: () => {
+          suggestion.status = newStatus;
+          console.log(
+            `Successfully updated suggestion ${suggestion.suggestion_id} to ${newStatus}`
+          );
+        },
+        error: (err) => {
+          console.error('Failed to update status in database', err);
+        },
+      });
+  }
+}
