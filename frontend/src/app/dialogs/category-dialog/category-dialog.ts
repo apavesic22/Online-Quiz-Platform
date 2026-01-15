@@ -24,7 +24,8 @@ import { FormsModule } from '@angular/forms';
         Save
       </button>
     </mat-dialog-actions>
-  `
+  `,
+  styleUrls: ['./category-dialog.scss'],
 })
 export class CategoryDialogComponent {
   constructor(

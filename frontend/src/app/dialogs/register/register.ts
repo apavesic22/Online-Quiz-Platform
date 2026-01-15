@@ -10,6 +10,7 @@ import { AuthService } from '../../services/auth';
 @Component({
   selector: 'register-dialog',
   standalone: true,
+  styleUrls: ["./register.scss"],
   imports: [
     CommonModule,
     MatDialogModule,

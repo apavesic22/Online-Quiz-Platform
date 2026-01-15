@@ -20,7 +20,8 @@ import { CommonModule } from '@angular/common';
         {{ data.buttonText || 'Confirm' }}
       </button>
     </mat-dialog-actions>
-  `
+  `,
+  styleUrls: ['./confirm-dialog.scss']
 })
 export class ConfirmDialogComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: { 

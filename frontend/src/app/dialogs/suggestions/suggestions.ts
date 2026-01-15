@@ -18,6 +18,7 @@ import { MatButtonModule } from '@angular/material/button';
     MatButtonModule
   ],
   templateUrl: './suggestions.html',
+  styleUrls: ['./suggestions.scss']
 })
 export class SuggestionDialogComponent {
   constructor(

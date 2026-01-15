@@ -19,6 +19,7 @@ import { AuthService } from '../../services/auth';
 @Component({
   selector: 'login-dialog',
   standalone: true,
+  styleUrls: ["./login.scss"],
   imports: [
     MatDialogModule,
     MatButtonModule,

@@ -1,63 +1,126 @@
-.spacer {
-  flex: 1 1 auto;
+// app.scss
+
+.toolbar {
+  background: rgba(15, 23, 42, 0.9) !important;
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 72px;
+
+  .app-title {
+    font-weight: 900;
+    font-size: 1.8rem;
+    background: linear-gradient(45deg, #8b5cf6, #06b6d4);
+    -webkit-background-clip: text; 
+    background-clip: text; 
+    -webkit-text-fill-color: transparent;
+    margin-left: 20px;
+  }
 }
 
-.mat-mdc-button {
-  font-weight: 500;
-}
+.spacer { flex: 1 1 auto; }
 
-.verified-badge {
-  color: #1d9bf0 !important;
-  font-size: 18px !important;
-  width: 18px !important;
-  height: 18px !important;
-  margin-left: 4px;
-  display: inline-block;
-  line-height: 1;
-}
-
-button[mat-button] {
-  display: inline-flex;
+.nav-buttons {
+  display: flex;
   align-items: center;
+  padding-right: 20px;
+
+  .main-nav {
+    display: flex;
+    gap: 10px;
+    margin-right: 15px;
+  }
+
+  button[mat-button] {
+    color: #94a3b8;
+    font-weight: 600;
+    height: 50px;
+    position: relative;
+    transition: color 0.3s ease;
+    overflow: visible !important; // Allow the indicator to be seen
+
+    // THE SLIDING INDICATOR PIECE
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 10%;
+      width: 80%;
+      height: 3px;
+      background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+      border-radius: 4px 4px 0 0;
+      
+      // Animation properties
+      opacity: 0;
+      transform: scaleX(0);
+      transition: transform 0.4s cubic-bezier(0.65, 0.05, 0.36, 1), 
+                  opacity 0.2s ease;
+    }
+
+    // Styles for the active link
+    &.active-link {
+      color: #fff !important;
+      
+      &::after {
+        opacity: 1;
+        transform: scaleX(1);
+        box-shadow: 0 -2px 10px rgba(6, 182, 212, 0.5);
+      }
+    }
+
+    &:hover:not(.active-link) {
+      color: #e2e8f0;
+      background: rgba(255, 255, 255, 0.03);
+    }
+  }
 }
 
-.user-button ::ng-deep .mat-mdc-button-touch-target {
-  display: none; 
-}
-
+// THE USER PILL (Stays static but glows)
 .user-button {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 4px; 
-}
-.username-text {
-  font-weight: 500;
-}
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  height: 46px !important;
+  transition: all 0.3s ease !important;
 
-.dropdown-icon {
-  margin-left: -4px; 
-}
+  // No sliding line for the user pill, just a glowing border
+  &::after { display: none !important; }
 
-
-.admin-badge, .admin-icon {
-  color: #d32f2f !important; 
-  vertical-align: middle;
-  font-size: 20px;
-}
-
-.manager-badge, .manager-icon {
-  color: #f9a825 !important; 
-  vertical-align: middle;
-  font-size: 20px;
+  &.active-profile {
+    border-color: #06b6d4 !important;
+    background: rgba(6, 182, 212, 0.1) !important;
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+    
+    .username-text { color: #fff; }
+    .dropdown-icon { color: #06b6d4; }
+  }
 }
 
-.verified-badge, .verified-icon {
-  color: #1a73e8 !important; 
-  vertical-align: middle;
-  font-size: 20px;
+// DROPDOWN MENU - No indicator applied here
+::ng-deep .mat-mdc-menu-panel {
+  background: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 12px;
+
+  .mat-mdc-menu-item {
+    color: #94a3b8 !important;
+    // Ensure no indicator shows in dropdown
+    &::after { display: none !important; }
+    
+    mat-icon { color: #8b5cf6 !important; }
+    &:hover { background: rgba(255, 255, 255, 0.05) !important; }
+  }
 }
 
-.username-text {
-  margin-left: 4px;
-  font-weight: 500;
+.username-text { font-weight: 700; color: #f1f5f9; margin: 0 8px; }
+.admin-badge { color: #f87171 !important; }
+.manager-badge { color: #fbbf24 !important; }
+.verified-badge { color: #06b6d4 !important; }
+
+.content {
+  min-height: calc(100vh - 72px);
+  background: #0f172a;
 }

@@ -1,5 +1,5 @@
 <mat-card class="create-quiz-card">
-  <h2>Create New Quiz</h2>
+  <h2 class="form-title">Create New Quiz</h2>
 
   <form [formGroup]="quizForm" (ngSubmit)="submitQuiz()">
     <div class="quiz-info-section">
@@ -8,7 +8,7 @@
         <input
           matInput
           formControlName="quiz_name"
-          placeholder="e.g. My Awesome Quiz"
+          placeholder="e.g. History Masters"
         />
       </mat-form-field>
 
@@ -16,10 +16,7 @@
         <mat-form-field appearance="outline">
           <mat-label>Category</mat-label>
           <mat-select formControlName="category_id">
-            <mat-option
-              *ngFor="let cat of categories"
-              [value]="cat.category_id"
-            >
+            <mat-option *ngFor="let cat of categories" [value]="cat.category_id">
               {{ cat.category_name }}
             </mat-option>
           </mat-select>
@@ -33,112 +30,101 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Timer (Seconds)</mat-label>
-          <input
-            matInput
-            type="number"
-            formControlName="duration"
-            placeholder="15"
-          />
-          <mat-hint *ngIf="!isVerifiedOrStaff"
-            >Locked to 15s for unverified</mat-hint
-          >
-        </mat-form-field>
       </div>
     </div>
 
     <div formArrayName="questions">
       <div
-        *ngFor="let q of questions.controls; let i=index"
+        *ngFor="let q of questions.controls; let i = index"
         [formGroupName]="i"
         class="question-item"
       >
         <div class="question-header">
-          <h3>Question {{ i + 1 }}</h3>
+          <h4>Question #{{ i + 1 }}</h4>
           <button
             mat-icon-button
             color="warn"
             type="button"
             (click)="questions.removeAt(i)"
-            *ngIf="questions.length > 1"
+            title="Remove Question"
           >
-            <mat-icon>delete</mat-icon>
+            <mat-icon>delete_forever</mat-icon>
           </button>
         </div>
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Question Text</mat-label>
-          <input matInput formControlName="text" />
+          <textarea
+            matInput
+            formControlName="question_text"
+            rows="2"
+            placeholder="Type your question here..."
+          ></textarea>
         </mat-form-field>
 
-        <mat-radio-group formControlName="type" class="type-selection">
-          <mat-radio-button value="multiple">Multiple Choice</mat-radio-button>
-          <mat-radio-button value="boolean">True / False</mat-radio-button>
-        </mat-radio-group>
-
-        <div *ngIf="q.get('type')?.value === 'multiple'">
-          <mat-radio-group
-            formControlName="correct_answer_index"
-            class="options-radio-group"
+        <div formArrayName="answers" class="answers-container">
+          <div
+            *ngFor="let a of getOptions(i).controls; let j = index"
+            class="answer-row"
           >
-            <div formArrayName="options">
-              <div
-                *ngFor="let opt of getOptions(i).controls; let j=index"
-                class="option-row"
-              >
-                <mat-radio-button [value]="j"></mat-radio-button>
-                <mat-form-field appearance="outline" class="flex-grow">
-                  <mat-label>Option {{ j + 1 }}</mat-label>
-                  <input
-                    matInput
-                    [formControlName]="j"
-                    placeholder="Enter answer text"
-                  />
-                </mat-form-field>
-              </div>
-            </div>
-          </mat-radio-group>
-        </div>
-
-        <div *ngIf="q.get('type')?.value === 'boolean'" class="boolean-row">
-          <mat-radio-group formControlName="boolean_correct">
-            <mat-radio-button value="True">True</mat-radio-button>
-            <mat-radio-button value="False">False</mat-radio-button>
-          </mat-radio-group>
+            <mat-radio-button
+              [value]="j"
+              [checked]="q.get('correct_answer')?.value === j"
+              (change)="q.get('correct_answer')?.setValue(j)"
+            >
+              <mat-form-field appearance="outline" class="answer-field">
+                <mat-label>Answer {{ j + 1 }}</mat-label>
+                <input
+                  matInput
+                  [formControlName]="j"
+                  placeholder="Enter answer..."
+                />
+              </mat-form-field>
+            </mat-radio-button>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="form-actions">
+    <div class="form-actions-container">
       <p
         *ngIf="questions.length >= 5 && !isVerifiedOrStaff"
-        style="color: orange; font-weight: bold"
+        class="limit-warning"
       >
-        <mat-icon>warning</mat-icon>
+        <mat-icon>info</mat-icon>
         Question limit reached for unverified users.
       </p>
 
       <button
         mat-stroked-button
-        color="primary"
         type="button"
+        class="add-btn"
         (click)="addQuestion()"
         [disabled]="questions.length >= 5 && !isVerifiedOrStaff"
       >
-        + Add New Question
+        <mat-icon>add_circle_outline</mat-icon>
+        Add New Question
       </button>
+
       <div class="submit-group">
-        <button mat-button type="button" (click)="cancel()">Cancel</button>
+        <button
+          mat-button
+          type="button"
+          class="cancel-btn"
+          (click)="cancel()"
+        >
+          Cancel
+        </button>
 
         <button
           mat-raised-button
           color="primary"
           type="submit"
-          [disabled]="quizForm.invalid"
+          class="submit-btn"
+          [disabled]="!quizForm.valid"
         >
-          Finalize Quiz
+          <mat-icon>rocket_launch</mat-icon>
+          Create Quiz
         </button>
       </div>
     </div>
