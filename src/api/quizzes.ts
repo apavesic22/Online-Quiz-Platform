@@ -586,20 +586,17 @@ quizzesRouter.post(
       const performerName = user?.username || "Unknown User";
 
       if (!Array.isArray(answers)) {
-        return res
-          .status(400)
-          .json({ error: "Invalid request body, expected 'answers' array" });
+        return res.status(400).json({ error: "Invalid request body" });
       }
 
-      // --- Get quiz and difficulty ---
       const quiz = await db.connection.get<{
         difficulty: string;
         quiz_name: string;
       }>(
         `SELECT q.quiz_name, d.difficulty 
-             FROM QUIZZES q
-             JOIN QUIZ_DIFFICULTIES d ON q.difficulty_id = d.id
-             WHERE q.quiz_id = ?`,
+         FROM QUIZZES q
+         JOIN QUIZ_DIFFICULTIES d ON q.difficulty_id = d.id
+         WHERE q.quiz_id = ?`,
         [quizId]
       );
 
@@ -608,70 +605,73 @@ quizzesRouter.post(
       }
 
       const pointsPerDifficulty: { [key: string]: number } = {
-        Easy: 10,
-        Medium: 20,
-        Hard: 30,
+        'Easy': 10,
+        'Medium': 20,
+        'Hard': 30,
       };
       const pointsPerAnswer = pointsPerDifficulty[quiz.difficulty] || 10;
 
-      let score = 0;
-      let correctAnswersCount = 0;
-
-      // --- Get all correct answers for the quiz at once ---
-      const correctAnswers: { question_id: number; answer_id: number }[] =
+      const correctAnswersRows: { question_id: number; answer_id: number }[] =
         await db.connection.all(
           `SELECT q.question_id, ao.answer_id
-             FROM QUESTIONS q
-             JOIN ANSWER_OPTIONS ao ON q.question_id = ao.question_id
-             WHERE q.quiz_id = ? AND ao.is_correct = 1`,
+           FROM QUESTIONS q
+           JOIN ANSWER_OPTIONS ao ON q.question_id = ao.question_id
+           WHERE q.quiz_id = ? AND ao.is_correct = 1`,
           [quizId]
         );
 
       const correctAnswerMap = new Map<number, number>();
-      correctAnswers.forEach((row) => {
+      correctAnswersRows.forEach((row) => {
         correctAnswerMap.set(row.question_id, row.answer_id);
       });
 
-      // --- Calculate score ---
+      let score = 0;
+      let correctAnswersCount = 0;
+
+      await db.connection.run("BEGIN TRANSACTION");
+
+      const attemptResult = await db.connection.run(
+        `INSERT INTO QUIZ_ATTEMPTS (user_id, quiz_id, score, finished_at, total_time_ms)
+         VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0)`,
+        [user.id, quizId, 0] 
+      );
+      const attemptId = attemptResult.lastID;
+
       for (const userAnswer of answers) {
-        if (
-          correctAnswerMap.get(userAnswer.question_id) === userAnswer.answer_id
-        ) {
+        const isCorrect = correctAnswerMap.get(userAnswer.question_id) === userAnswer.answer_id;
+        if (isCorrect) {
           score += pointsPerAnswer;
           correctAnswersCount++;
         }
+
+        await db.connection.run(
+          `INSERT INTO ATTEMPT_ANSWERS (attempt_id, question_id, answer_id, is_correct, time_taken_ms) 
+           VALUES (?, ?, ?, ?, 0)`,
+          [attemptId, userAnswer.question_id, userAnswer.answer_id, isCorrect ? 1 : 0]
+        );
       }
 
-      const incorrectAnswersCount = answers.length - correctAnswersCount;
-
-      // --- Record the attempt ---
       await db.connection.run(
-        `INSERT INTO QUIZ_ATTEMPTS (user_id, quiz_id, score, finished_at, total_time_ms)
-             VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0)`,
-        [user.id, quizId, score]
+        `UPDATE QUIZ_ATTEMPTS SET score = ? WHERE attempt_id = ?`,
+        [score, attemptId]
       );
-
-      const logMessage = `${performerName} finished a quiz: ${quiz.quiz_name} with ${score} points`;
 
       await db.connection.run(
         `INSERT INTO LOGS (action_performer, action, time_of_action, user_id, quiz_id) 
          VALUES (?, ?, CURRENT_TIMESTAMP, ?, ?)`,
-        [performerName, logMessage, user.id, quizId]
+        [performerName, `${performerName} finished quiz: ${quiz.quiz_name} (${score} pts)`, user.id, quizId]
       );
 
-      // --- Update user's total score ---
       await db.connection.run(
         `UPDATE USERS SET total_score = total_score + ? WHERE user_id = ?`,
         [score, user.id]
       );
 
-      // --- Recompute ranks ---
+      await db.connection.run("COMMIT");
       await recomputeUserRanks();
 
       const leaderboard = await db.connection.all(
-        `SELECT u.username, u.total_score, u.rank 
-       FROM USERS u 
-       ORDER BY u.rank ASC LIMIT 10`
+        `SELECT u.username, u.total_score, u.rank FROM USERS u ORDER BY u.rank ASC LIMIT 10`
       );
 
       const currentUserStats = await db.connection.get(
@@ -681,13 +681,15 @@ quizzesRouter.post(
 
       res.status(200).json({
         message: "Quiz submitted successfully!",
-        score: score,
+        score,
         correctAnswers: correctAnswersCount,
-        incorrectAnswers: incorrectAnswersCount,
-        leaderboard: leaderboard,
-        currentUserStats: currentUserStats,
+        incorrectAnswers: answers.length - correctAnswersCount,
+        leaderboard,
+        currentUserStats
       });
+
     } catch (err) {
+      if (db.connection) await db.connection.run("ROLLBACK");
       console.error(err);
       res.status(500).json({ error: "Failed to submit quiz answers" });
     }

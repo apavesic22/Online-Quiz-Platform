@@ -14,7 +14,13 @@ import { RouterModule } from '@angular/router';
 @Component({
   selector: 'play-quiz-page',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatProgressBarModule, LeaderboardComponent, RouterModule],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatProgressBarModule,
+    LeaderboardComponent,
+    RouterModule,
+  ],
   templateUrl: './play-quiz.html',
   styleUrls: ['./play-quiz.scss'],
 })
@@ -41,7 +47,7 @@ export class PlayQuizPage implements OnInit, OnDestroy {
   currentUserStats: any = null;
 
   user: User | null = null;
-  userAnswers: { question_id: number, answer_id: number }[] = [];
+  userAnswers: { question_id: number; answer_id: number, is_correct: boolean}[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -51,7 +57,7 @@ export class PlayQuizPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
+    this.authService.currentUser$.subscribe((user) => {
       this.user = user;
     });
 
@@ -103,9 +109,15 @@ export class PlayQuizPage implements OnInit, OnDestroy {
     this.selectedAnswerId = answer.answer_id;
     this.stopTimer();
 
-    this.userAnswers.push({ question_id: this.currentQuestion.question_id, answer_id: answer.answer_id });
+    const isCorrect = answer.is_correct === 1;
 
-    if (answer.is_correct === 1) {
+    this.userAnswers.push({
+      question_id: this.currentQuestion.question_id,
+      answer_id: answer.answer_id,
+      is_correct: isCorrect,
+    });
+
+    if (isCorrect) {
       this.correctCount++;
     } else {
       this.wrongCount++;
@@ -150,21 +162,21 @@ export class PlayQuizPage implements OnInit, OnDestroy {
       );
       this.router.navigate(['/quizzes']);
     } else {
-      this.quizzesService.submitAnswers(this.quizId, this.userAnswers).subscribe({
-        next: (result) => {
-          this.finalScore = result.score;
-          this.correctCount = result.correctAnswers;
-          this.wrongCount = result.incorrectAnswers;
-          this.leaderboardData = result.leaderboard;
-          this.currentUserStats = result.currentUserStats;
-
-          
-        },
-        error: (err) => {
-          console.error(err);
-          alert('There was an error submitting your answers.');
-        }
-      });
+      this.quizzesService
+        .submitAnswers(this.quizId, this.userAnswers)
+        .subscribe({
+          next: (result) => {
+            this.finalScore = result.score;
+            this.correctCount = result.correctAnswers;
+            this.wrongCount = result.incorrectAnswers;
+            this.leaderboardData = result.leaderboard;
+            this.currentUserStats = result.currentUserStats;
+          },
+          error: (err) => {
+            console.error(err);
+            alert('There was an error submitting your answers.');
+          },
+        });
     }
   }
 
