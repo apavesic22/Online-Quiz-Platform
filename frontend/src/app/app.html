@@ -14,12 +14,12 @@
       <span>Leaderboard</span>
     </button>
 
-    @if (isLoggedIn && user.verified === 1) {
+    @if (isLoggedIn && user.role_id === 3) {
     <button mat-button (click)="openSuggestionDialog()">
       <mat-icon>lightbulb</mat-icon>
       <span>Suggestions</span>
     </button>
-    } @if (isLoggedIn && user && ( user.role_id === 2)) {
+    } @if (isLoggedIn && user && ( user.role_id <= 2)) {
     <button mat-button [matMenuTriggerFor]="manageMenu">
       <span>Manage</span>
       <mat-icon>arrow_drop_down</mat-icon>
@@ -30,6 +30,7 @@
         <mat-icon>people</mat-icon>
         <span>Manage Users</span>
       </button>
+      @if (isLoggedIn && user.role_id === 2) {
       <button mat-menu-item routerLink="/manage-categories">
         <mat-icon>category</mat-icon>
         <span>Manage Categories</span>
@@ -38,6 +39,7 @@
         <mat-icon>rate_review</mat-icon>
         <span>Manage Suggestions</span>
       </button>
+    }
     </mat-menu>
     }
 

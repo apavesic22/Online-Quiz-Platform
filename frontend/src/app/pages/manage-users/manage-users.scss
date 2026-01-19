@@ -1,5 +1,3 @@
-// manage-users.scss
-
 .manage-container {
   padding: 40px 24px;
   max-width: 1300px;
@@ -17,7 +15,6 @@
     letter-spacing: -1px;
   }
 
-  // 1. HIGH-VISIBILITY SEARCH FIELD
   .search-field {
     width: 100%;
     max-width: 500px;
@@ -25,7 +22,7 @@
 
     ::ng-deep {
       .mat-mdc-text-field-wrapper {
-        background-color: rgba(255, 255, 255, 0.08) !important; // Slightly lighter for visibility
+        background-color: rgba(255, 255, 255, 0.08) !important; 
         border-radius: 16px !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         transition: all 0.3s ease;
@@ -55,7 +52,6 @@
     }
   }
 
-  // 2. THE TABLE (Floating Glass Rows)
   table {
     width: 100%;
     background: transparent !important;
@@ -93,7 +89,6 @@
     }
   }
 
-  // 3. BADGES & STATUS
   .verified-badge {
     color: #06b6d4 !important;
     font-size: 20px;
@@ -109,13 +104,12 @@
     font-weight: 800;
     text-transform: uppercase;
     font-size: 0.7rem;
-    background: linear-gradient(135deg, #059669, #10b981); // Emerald gradient
+    background: linear-gradient(135deg, #059669, #10b981); 
     padding: 4px 12px;
     border-radius: 50px;
     box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
   }
 
-  // 4. HIGH-VISIBILITY ACTION BUTTONS
   .mat-mdc-button-base {
     &.mat-mdc-unelevated-button, &.mat-mdc-raised-button, &.mat-stroked-button {
       border-radius: 12px !important;
@@ -127,7 +121,6 @@
       transition: all 0.3s ease !important;
     }
 
-    // "Verify" Button (Cyan/Blue Theme)
     &.mat-primary {
       background: rgba(6, 182, 212, 0.15) !important;
       border: 1px solid #06b6d4 !important;
@@ -135,12 +128,11 @@
 
       &:hover {
         background: #06b6d4 !important;
-        color: #0f172a !important; // Dark text on light hover
+        color: #0f172a !important; 
         box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
       }
     }
 
-    // "Unverify" Button (Red/Warn Theme)
     &.mat-warn {
       background: rgba(239, 68, 68, 0.15) !important;
       border: 1px solid #ef4444 !important;
@@ -153,8 +145,6 @@
       }
     }
   }
-
-  // 5. MODERN PAGINATOR
   mat-paginator {
     background: transparent !important;
     color: #cbd5e1 !important;
@@ -182,3 +172,105 @@ p {
   margin-top: 60px; 
   font-size: 1.2rem;
 }
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 20px;
+
+    h1 { margin-bottom: 0; } 
+
+    button[mat-raised-button] {
+      height: 48px;
+      padding: 0 24px !important;
+      border-radius: 14px !important;
+      font-weight: 800;
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important; 
+      color: white;
+      box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 25px rgba(139, 92, 246, 0.4);
+      }
+    }
+  }
+
+  .action-group {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px; 
+    padding: 4px 0;
+  }
+
+button[mat-icon-button] {
+  width: 42px;
+  height: 42px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  display: inline-flex !important;  
+  align-items: center;              
+  justify-content: center;          
+  padding: 0 !important;            
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;   
+    height: 20px;  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 !important; 
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+  }
+
+  &.mat-primary { color: #06b6d4 !important; }
+  &.mat-warn { color: #ef4444 !important; }
+}
+  .mat-mdc-button-base {
+    &.mat-mdc-unelevated-button, &.mat-mdc-raised-button, &.mat-stroked-button {
+      border-radius: 12px !important;
+      font-weight: 800 !important;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      height: 40px;
+      padding: 0 20px !important;
+      transition: all 0.3s ease !important;
+    }
+
+    &.mat-primary {
+      background: rgba(6, 182, 212, 0.15) !important;
+      border: 1px solid #06b6d4 !important;
+      color: #06b6d4 !important;
+      &:hover {
+        background: #06b6d4 !important;
+        color: #0f172a !important;
+        box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+      }
+    }
+
+    &.mat-warn {
+      background: rgba(239, 68, 68, 0.15) !important;
+      border: 1px solid #ef4444 !important;
+      color: #ef4444 !important;
+      &:hover {
+        background: #ef4444 !important;
+        color: #fff !important;
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+      }
+    }
+  }
+
+  .mat-column-actions {
+    min-width: 200px;
+    padding-left: 20px !important;
+  }

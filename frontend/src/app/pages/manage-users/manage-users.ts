@@ -10,6 +10,8 @@ import { ConfirmDialogComponent } from '../../dialogs/confirm-dialog/confirm-dia
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { MatFormField, MatLabel, MatInputModule } from '@angular/material/input';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { AuthService } from '../../services/auth';
+import { UserFormDialogComponent } from '../../dialogs/user-form-dialog/user-form-dialog';
 
 @Component({
   selector: 'app-manage-users',
@@ -34,6 +36,8 @@ export class ManageUsersPage implements OnInit {
   currentPage = 0;
   pageSize = 10;
   loading = false;
+  isAdmin = false;
+  isManager = false;
   private searchSubject = new Subject<string>();
 
   displayedColumns: string[] = [
@@ -47,17 +51,23 @@ export class ManageUsersPage implements OnInit {
   constructor(
     private http: HttpClient,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private authService: AuthService
   ) {}
 
-  ngOnInit() {
+ngOnInit() {
+    this.authService.currentUser$.subscribe(user => {
+      this.isAdmin = user?.role_id === 1;
+      this.isManager = user?.role_id === 2;
+    });
+
     this.loadUsers();
 
     this.searchSubject
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe((searchText) => {
         this.searchQuery = searchText;
-        this.currentPage = 0; // Reset to first page on new search
+        this.currentPage = 0;
         this.loadUsers();
       });
   }
@@ -88,36 +98,83 @@ export class ManageUsersPage implements OnInit {
     });
   }
 
-  toggleVerification(user: any) {
-    const isCurrentlyVerified = user.verified === 1;
+  openCreateDialog() {
+    const dialogRef = this.dialog.open(UserFormDialogComponent, { width: '450px', data: {} });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.http.post('/api/users', result).subscribe({
+          next: () => {
+            this.snackBar.open('User created successfully', 'OK', { duration: 3000 });
+            this.loadUsers();
+          },
+          error: (err) => this.snackBar.open(err.error?.error || 'Create failed', 'Close')
+        });
+      }
+    });
+  }
 
-    const actionText = isCurrentlyVerified ? 'unverify' : 'verify';
-    const buttonColor = isCurrentlyVerified ? 'warn' : 'primary';
-    const buttonLabel = isCurrentlyVerified ? 'Unverify' : 'Verify';
+  openEditDialog(user: any) {
+    const dialogRef = this.dialog.open(UserFormDialogComponent, { width: '450px', data: { user } });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.http.put(`/api/users/${user.username}`, result).subscribe({
+          next: () => {
+            this.snackBar.open('User updated', 'OK', { duration: 3000 });
+            this.loadUsers();
+          },
+          error: (err) => this.snackBar.open(err.error?.error || 'Update failed', 'Close')
+        });
+      }
+    });
+  }
 
+  deleteUser(user: any) {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        message: `Are you sure you want to ${actionText} ${user.username}?`,
-        buttonText: buttonLabel, 
-        color: buttonColor, 
+        message: `Are you sure you want to permanently delete user ${user.username}?`,
+        buttonText: 'Delete User',
+        color: 'warn'
+      },
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.http.delete(`/api/users/${user.username}`).subscribe({
+          next: () => {
+            this.snackBar.open('User deleted', 'OK', { duration: 3000 });
+            this.loadUsers();
+          },
+          error: (err) => this.snackBar.open(err.error?.error || 'Delete failed', 'Close')
+        });
+      }
+    });
+  }
+
+toggleVerification(user: any) {
+    const isCurrentlyVerified = user.verified === 1;
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        message: `Are you sure you want to ${isCurrentlyVerified ? 'unverify' : 'verify'} ${user.username}?`,
+        buttonText: isCurrentlyVerified ? 'Unverify' : 'Verify',
+        color: isCurrentlyVerified ? 'warn' : 'primary',
       },
     });
 
     dialogRef.afterClosed().subscribe((confirmed) => {
-  if (confirmed) {
-    const newStatus = isCurrentlyVerified ? 0 : 1;
-    this.http.put(`/api/users/${user.username}`, { verified: newStatus }).subscribe({
-      next: (res: any) => {
-        user.verified = res.verified !== undefined ? res.verified : newStatus;
-        
-        this.snackBar.open(
-          `User ${user.username} is now ${user.verified === 1 ? 'verified' : 'unverified'}.`,
-          'OK', { duration: 2000 }
-        );
-      },
-      error: (err) => this.snackBar.open(err.error?.error || 'Update failed', 'Close')
+      if (confirmed) {
+        const newStatus = isCurrentlyVerified ? 0 : 1;
+        const newRoleId = isCurrentlyVerified ? 4 : 3;
+        this.http.put(`/api/users/${user.username}`, { verified: newStatus, role_id: newRoleId }).subscribe({
+          next: (res: any) => {
+            user.verified = res.verified !== undefined ? res.verified : newStatus;
+            user.role_id = newRoleId;
+            user.role_name = newRoleId === 3 ? 'Verified User' : 'Standard User';
+            this.snackBar.open(`User is now ${user.verified === 1 ? 'verified' : 'unverified'}.`, 'OK', { duration: 2000 });
+          }
+        });
+      }
     });
   }
-});
-  }
+
+  
 }

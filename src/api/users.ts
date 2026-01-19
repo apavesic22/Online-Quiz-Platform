@@ -267,7 +267,7 @@ usersRouter.delete(
 
       const { username } = req.params;
 
-      // ---- check user existence ----
+      // 1. Get user details first
       const user = await db.connection.get<{
         user_id: number;
         role_id: number;
@@ -277,19 +277,63 @@ usersRouter.delete(
         return res.status(404).json({ error: "User not found" });
       }
 
-      // ---- protect admin accounts ----
+      // 2. Security: Prevent deletion of Administrators
       if (user.role_id === 1) {
-        return res.status(403).json({ error: "Cannot delete administrator" });
+        return res.status(403).json({ error: "Cannot delete administrator accounts" });
       }
 
-      await db.connection.run(`DELETE FROM USERS WHERE user_id = ?`, [
-        user.user_id,
-      ]);
+      /**
+       * 3. CLEANUP PHASE (Transaction)
+       * We use a transaction to ensure either everything is deleted or nothing is.
+       */
+      await db.connection.run("BEGIN TRANSACTION");
 
-      res.status(200).json({ message: "User deleted successfully" });
+      try {
+        const uid = user.user_id;
+
+        // A. Delete activity logs and likes
+        await db.connection.run(`DELETE FROM LOGS WHERE user_id = ?`, [uid]);
+        await db.connection.run(`DELETE FROM QUIZ_LIKES WHERE user_id = ?`, [uid]);
+        await db.connection.run(`DELETE FROM SUGGESTIONS WHERE user_id = ? OR reviewer_id = ?`, [uid, uid]);
+
+        // B. Delete quiz attempts and their associated answers
+        // We must delete ATTEMPT_ANSWERS before QUIZ_ATTEMPTS
+        await db.connection.run(`
+          DELETE FROM ATTEMPT_ANSWERS 
+          WHERE attempt_id IN (SELECT attempt_id FROM QUIZ_ATTEMPTS WHERE user_id = ?)
+        `, [uid]);
+        await db.connection.run(`DELETE FROM QUIZ_ATTEMPTS WHERE user_id = ?`, [uid]);
+
+        // C. Handle Quizzes created by this user
+        // Note: This will also delete all questions and answers for those quizzes 
+        // because we follow the chain: AnswerOptions -> Questions -> Quizzes
+        await db.connection.run(`
+          DELETE FROM ANSWER_OPTIONS WHERE question_id IN (
+            SELECT question_id FROM QUESTIONS WHERE quiz_id IN (
+              SELECT quiz_id FROM QUIZZES WHERE user_id = ?
+            )
+          )
+        `, [uid]);
+
+        await db.connection.run(`
+          DELETE FROM QUESTIONS WHERE quiz_id IN (SELECT quiz_id FROM QUIZZES WHERE user_id = ?)
+        `, [uid]);
+
+        await db.connection.run(`DELETE FROM QUIZZES WHERE user_id = ?`, [uid]);
+
+        // D. Finally, delete the User record
+        await db.connection.run(`DELETE FROM USERS WHERE user_id = ?`, [uid]);
+
+        await db.connection.run("COMMIT");
+        
+        res.status(200).json({ message: `User '${username}' and all associated data deleted.` });
+      } catch (innerError) {
+        await db.connection.run("ROLLBACK");
+        throw innerError;
+      }
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Failed to delete user" });
+      console.error("Delete Error:", err);
+      res.status(500).json({ error: "Failed to delete user due to database constraints" });
     }
   }
 );
