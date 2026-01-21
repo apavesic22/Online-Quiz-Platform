@@ -10,6 +10,7 @@ import { quizzesRouter } from "./api/quizzes";
 import { categoriesRouter } from "./api/categories";
 import { suggestionsRouter } from "./api/suggestions";
 import { difficultiesRouter } from "./api/difficulties";
+import { statsRouter } from "./api/statistics";
 
 config({ quiet: true });
 
@@ -41,6 +42,7 @@ async function main() {
   app.use(apiUrl + "/categories", categoriesRouter);
   app.use(apiUrl + "/suggestions", suggestionsRouter);
   app.use(apiUrl + "/difficulties", difficultiesRouter);
+  app.use(apiUrl + "/statistics", statsRouter);
 
   app.use(errorHandler);
 

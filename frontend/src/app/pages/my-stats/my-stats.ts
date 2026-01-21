@@ -4,15 +4,9 @@ import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
 import { DatePipe, CommonModule } from '@angular/common';
 import { Chart } from 'chart.js/auto';
+import { StatsService } from '../../services/statsService';
+import { PersonalStats } from '../../models/personal-stats';
 
-export interface PersonalStats {
-  quiz_name: string;
-  your_score: number;      
-  correct_answers: number; 
-  total_questions: number; 
-  category_name: string;
-  finished_at: string;
-}
 
 @Component({
   selector: 'app-my-stats',
@@ -25,16 +19,16 @@ export class MyStatsComponent implements OnInit {
   displayedColumns: string[] = ['name', 'category', 'score', 'accuracy', 'date'];
   dataSource: PersonalStats[] = [];
   chart: any;
+  
 
-  constructor(private http: HttpClient) {}
+  constructor(private statsService: StatsService) {}
 
   ngOnInit() {
-    this.http.get<PersonalStats[]>('/api/quizzes/my-stats').subscribe((data) => {
+    this.statsService.getPersonalStats().subscribe((data) => {
       this.dataSource = data;
-      if (data && data.length > 0) {
-        setTimeout(() => this.createChart(), 100);
-      }
+      this.createChart();
     });
+      
   }
 
   createChart() {

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Chart } from 'chart.js/auto';
 import { MatCardModule } from '@angular/material/card';
+import { StatsService } from '../../services/statsService';
 
 @Component({
   selector: 'app-difficulty-dist',
@@ -18,36 +19,42 @@ import { MatCardModule } from '@angular/material/card';
         </mat-card-content>
       </mat-card>
     </div>
-  `
+  `,
 })
 export class DifficultyDistComponent implements OnInit {
-  constructor(private http: HttpClient) {}
+  constructor(
+    private statsService: StatsService,
+  ) {}
 
   ngOnInit() {
-    this.http.get<{label: string, count: number}[]>('/api/quizzes/difficulty-stats')
-      .subscribe(data => {
+    this.statsService.getDifficultyStats().subscribe((data) => {
+      if (data && data.length > 0) {
         this.createChart(data);
-      });
+      }
+    });
   }
-
   createChart(stats: any[]) {
-    const ctx = document.getElementById('difficultyPieChart') as HTMLCanvasElement;
+    const ctx = document.getElementById(
+      'difficultyPieChart',
+    ) as HTMLCanvasElement;
     new Chart(ctx, {
       type: 'pie',
       data: {
-        labels: stats.map(s => s.label),
-        datasets: [{
-          data: stats.map(s => s.count),
-          backgroundColor: ['#4caf50', '#ff9800', '#f44336'],
-          hoverOffset: 4
-        }]
+        labels: stats.map((s) => s.label),
+        datasets: [
+          {
+            data: stats.map((s) => s.count),
+            backgroundColor: ['#4caf50', '#ff9800', '#f44336'],
+            hoverOffset: 4,
+          },
+        ],
       },
       options: {
         responsive: true,
         plugins: {
-          legend: { position: 'bottom' }
-        }
-      }
+          legend: { position: 'bottom' },
+        },
+      },
     });
   }
 }

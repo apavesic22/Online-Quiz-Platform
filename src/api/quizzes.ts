@@ -6,6 +6,7 @@ import { requireRole } from "../helpers/auth";
 
 export const quizzesRouter = Router();
 
+//Endpoint to create a new quiz
 quizzesRouter.post("/", async (req, res) => {
   try {
     if (!db.connection)
@@ -107,20 +108,7 @@ quizzesRouter.post("/", async (req, res) => {
   }
 });
 
-quizzesRouter.get("/difficulties", async (req, res) => {
-  try {
-    if (!db.connection) {
-      return res.status(500).json({ error: "Database not initialized" });
-    }
-    const difficulties = await db.connection.all(
-      "SELECT id, difficulty FROM QUIZ_DIFFICULTIES"
-    );
-    res.json(difficulties);
-  } catch (err) {
-    res.status(500).json({ error: "Could not load difficulties" });
-  }
-});
-
+//Endpoint to fetch all quizzes
 quizzesRouter.get("/", async (req, res) => {
   try {
     if (!db.connection) {
@@ -188,6 +176,7 @@ quizzesRouter.get("/", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch quizzes" });
   }
 });
+/*
 quizzesRouter.get("/category/:category", async (req, res) => {
   try {
     if (!db.connection) {
@@ -261,7 +250,8 @@ quizzesRouter.get("/category/:category", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch quizzes by category" });
   }
 });
-
+*/
+//Endpoint to update quiz content
 quizzesRouter.put("/:id", async (req, res) => {
   try {
     if (!db.connection) return res.status(500).json({ error: "DB Error" });
@@ -341,6 +331,7 @@ quizzesRouter.put("/:id", async (req, res) => {
   }
 });
 
+//Endpoint to fetch quiz for editing
 quizzesRouter.get("/:id/QuizEdit", requireRole([1]), async (req, res) => {
   try {
     if (!db.connection) {
@@ -363,6 +354,7 @@ quizzesRouter.get("/:id/QuizEdit", requireRole([1]), async (req, res) => {
   }
 });
 
+//Endpoint to delete a quiz
 quizzesRouter.delete("/:id", async (req, res) => {
   try {
     if (!db.connection) {
@@ -453,6 +445,7 @@ quizzesRouter.delete("/:id", async (req, res) => {
   }
 });
 
+//Endpoint to fetch quiz questions
 quizzesRouter.get("/:id/questions", async (req, res) => {
   try {
     if (!db.connection) {
@@ -522,6 +515,7 @@ quizzesRouter.get("/:id/questions", async (req, res) => {
   }
 });
 
+//Endpoint for submitting quiz answers when a quiz finishes
 quizzesRouter.post(
   "/:id/submit",
   requireRole([1, 2, 3, 4]),
@@ -650,73 +644,7 @@ quizzesRouter.post(
     }
   }
 );
-
-quizzesRouter.get("/:id/leaderboard", async (req, res) => {
-  try {
-    if (!db.connection) {
-      return res.status(500).json({ error: "Database not initialized" });
-    }
-
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    const quizId = Number(req.params.id);
-    if (Number.isNaN(quizId)) {
-      return res.status(400).json({ error: "Invalid quiz id" });
-    }
-
-    const user = req.user as User;
-
-    const quiz = await db.connection.get(
-      `SELECT quiz_id FROM QUIZZES WHERE quiz_id = ?`,
-      [quizId]
-    );
-
-    if (!quiz) {
-      return res.status(404).json({ error: "Quiz not found" });
-    }
-
-    const leaderboard = await db.connection.all<LeaderboardEntry[]>(
-      `
-  SELECT
-    u.user_id,
-    u.username,
-    qa.score,
-    ROW_NUMBER() OVER (
-      ORDER BY qa.score DESC, qa.finished_at ASC
-    ) AS rank
-  FROM QUIZ_ATTEMPTS qa
-  JOIN USERS u ON u.user_id = qa.user_id
-  WHERE qa.quiz_id = ?
-`,
-      [quizId]
-    );
-
-    if (leaderboard.length === 0) {
-      return res.status(204).send();
-    }
-
-    const top10 = leaderboard.slice(0, 10);
-
-    const currentUserEntry = leaderboard.find(
-      (entry) => entry.user_id === user.id
-    );
-
-    res.status(200).json({
-      quiz_id: quizId,
-      top10,
-      currentUser:
-        currentUserEntry && currentUserEntry.rank > 10
-          ? currentUserEntry
-          : null,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch leaderboard" });
-  }
-});
-
+/*
 quizzesRouter.post("/:id/answer", async (req, res) => {
   try {
     if (!db.connection) {
@@ -814,6 +742,7 @@ quizzesRouter.post("/:id/answer", async (req, res) => {
     res.status(500).json({ error: "Failed to submit answers" });
   }
 });
+*/
 
 quizzesRouter.post("/:id/attempts", async (req, res) => {
   try {
@@ -881,41 +810,6 @@ quizzesRouter.post("/:id/attempts", async (req, res) => {
   }
 });
 
-quizzesRouter.get("/my-stats", async (req, res) => {
-  try {
-    if (!db.connection) return res.status(500).json({ error: "Database not initialized" });
-    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
-
-    const user = req.user as any;
-    const userId = user.id || user.user_id;
-
-    const personalStats = await db.connection.all(
-      `
-      SELECT 
-        q.quiz_name,
-        qa.score AS your_score,  -- Renamed for frontend consistency
-        qa.finished_at,
-        c.category_name,
-        -- 1. Count actual correct answers from individual responses
-        (SELECT COUNT(*) FROM ATTEMPT_ANSWERS WHERE attempt_id = qa.attempt_id AND is_correct = 1) as correct_answers,
-        -- 2. Get total questions for this specific quiz
-        (SELECT COUNT(*) FROM QUESTIONS WHERE quiz_id = q.quiz_id) as total_questions
-      FROM QUIZ_ATTEMPTS qa
-      JOIN QUIZZES q ON qa.quiz_id = q.quiz_id
-      JOIN CATEGORIES c ON q.category_id = c.category_id
-      WHERE qa.user_id = ? 
-      ORDER BY qa.finished_at ASC -- Sort ASC for chronological chart flow
-    `,
-      [userId]
-    );
-
-    res.json(personalStats);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch stats" });
-  }
-});
-
 quizzesRouter.post("/:id/like", async (req, res) => {
   try {
     if (!db.connection)
@@ -956,21 +850,5 @@ quizzesRouter.post("/:id/like", async (req, res) => {
   } catch (err) {
     console.error("SQL Error in Like Route:", err);
     res.status(500).json({ error: "Internal Server Error during Like toggle" });
-  }
-});
-quizzesRouter.get("/difficulty-stats", async (req, res) => {
-  try {
-    if (!db.connection) return res.status(500).json({ error: "Database not initialized" });
-
-    const stats = await db.connection.all(
-      `SELECT d.difficulty as label, COUNT(q.quiz_id) as count
-       FROM QUIZ_DIFFICULTIES d
-       LEFT JOIN QUIZZES q ON d.id = q.difficulty_id
-       GROUP BY d.difficulty`
-    );
-
-    res.json(stats);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch difficulty stats" });
   }
 });

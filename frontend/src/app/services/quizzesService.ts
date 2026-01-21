@@ -19,13 +19,20 @@ export class QuizzesService {
 
   submitAnswers(
     quizId: number,
-    answers: { question_id: number; answer_id: number }[]
+    answers: { question_id: number; answer_id: number }[],
   ): Observable<any> {
     return this.http.post(`${this.apiUrl}/${quizId}/submit`, { answers });
   }
-  
+
   createQuiz(quizData: any): Observable<any> {
     return this.http.post(this.apiUrl, quizData);
   }
 
+  getQuizForEdit(quizId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${quizId}/QuizEdit`);
+  }
+
+  updateQuiz(quizId: number, quizData: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${quizId}`, quizData);
+  }
 }

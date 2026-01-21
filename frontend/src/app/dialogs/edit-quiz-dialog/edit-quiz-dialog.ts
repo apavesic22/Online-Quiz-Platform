@@ -18,6 +18,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
+import { QuizzesService } from '../../services/quizzesService';
 
 @Component({
   standalone: true,
@@ -251,6 +252,7 @@ export class AdminQuizEditDialog implements OnInit {
     private dialogRef: MatDialogRef<AdminQuizEditDialog>,
     @Inject(MAT_DIALOG_DATA) public data: { quiz_id: number },
     private http: HttpClient,
+    private quizzesService: QuizzesService
   ) {
     this.quizForm = this.fb.group({
       quiz_name: ['', Validators.required],
@@ -261,14 +263,12 @@ export class AdminQuizEditDialog implements OnInit {
   }
 
   ngOnInit() {
-    this.http
-      .get<any>(`/api/quizzes/${this.data.quiz_id}/QuizEdit`)
-      .subscribe((quiz) => {
-        this.quizForm.patchValue({
-          quiz_name: quiz.quiz_name,
-          category_id: quiz.category_id,
-          difficulty_id: quiz.difficulty_id,
-        });
+    this.quizzesService.getQuizForEdit(this.data.quiz_id).subscribe((quiz) => {
+      this.quizForm.patchValue({
+        quiz_name: quiz.quiz_name,
+        category_id: quiz.category_id,
+        difficulty_id: quiz.difficulty_id,
+      });
 
         quiz.questions.forEach((q: any) => {
           const questionGroup = this.fb.group({
@@ -307,13 +307,11 @@ export class AdminQuizEditDialog implements OnInit {
 
   save() {
     if (this.quizForm.valid) {
-      this.http
-        .put(`/api/quizzes/${this.data.quiz_id}`, this.quizForm.value)
-        .subscribe({
-          next: () => {
-            alert('Quiz updated successfully!');
-            this.dialogRef.close(true);
-          },
+      this.quizzesService.updateQuiz(this.data.quiz_id, this.quizForm.value).subscribe({
+        next: () => {
+          alert('Quiz updated successfully!');
+          this.dialogRef.close(true);
+        },
           error: (err) => console.error('Update failed', err),
         });
     }
