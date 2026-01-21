@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../helpers/db";
-import { Category } from "../model/Categories"; 
+import { Category } from "../model/Categories";
 import { User } from "../model/user";
 
 export const categoriesRouter = Router();
@@ -62,22 +62,18 @@ categoriesRouter.post("/", async (req, res) => {
       return res.status(400).json({ error: "Invalid category_name" });
     }
 
-    // ---- check uniqueness ----
     const existing = await db.connection.get(
       `SELECT category_id FROM CATEGORIES WHERE LOWER(category_name) = LOWER(?)`,
       [trimmedName]
     );
-
     if (existing) {
       return res.status(409).json({ error: "Category already exists" });
     }
 
-    // ---- insert ----
     const result = await db.connection.run(
       `INSERT INTO CATEGORIES (category_name) VALUES (?)`,
       [trimmedName]
     );
-
     res.status(201).json({
       category_id: result.lastID,
       category_name: trimmedName,
@@ -123,17 +119,14 @@ categoriesRouter.put("/:categoryId", async (req, res) => {
       return res.status(400).json({ error: "Invalid category_name" });
     }
 
-    // ---- check category exists ----
     const category = await db.connection.get(
       `SELECT category_id FROM CATEGORIES WHERE category_id = ?`,
       [categoryId]
     );
-
     if (!category) {
       return res.status(404).json({ error: "Category not found" });
     }
 
-    // ---- check name uniqueness ----
     const existing = await db.connection.get(
       `
       SELECT category_id
@@ -142,17 +135,14 @@ categoriesRouter.put("/:categoryId", async (req, res) => {
       `,
       [trimmedName, categoryId]
     );
-
     if (existing) {
       return res.status(409).json({ error: "Category name already exists" });
     }
 
-    // ---- update ----
     await db.connection.run(
       `UPDATE CATEGORIES SET category_name = ? WHERE category_id = ?`,
       [trimmedName, categoryId]
     );
-
     res.status(200).json({
       category_id: categoryId,
       category_name: trimmedName,
@@ -187,7 +177,6 @@ categoriesRouter.delete("/:categoryId", async (req, res) => {
       return res.status(400).json({ error: "Invalid category id" });
     }
 
-    // ---- category exists ----
     const category = await db.connection.get(
       `SELECT category_id FROM CATEGORIES WHERE category_id = ?`,
       [categoryId]
@@ -197,7 +186,6 @@ categoriesRouter.delete("/:categoryId", async (req, res) => {
       return res.status(404).json({ error: "Category not found" });
     }
 
-    // ---- check usage ----
     const usage = await db.connection.get<{ count: number }>(
       `
       SELECT COUNT(*) as count
@@ -206,19 +194,16 @@ categoriesRouter.delete("/:categoryId", async (req, res) => {
       `,
       [categoryId]
     );
-
     if ((usage?.count ?? 0) > 0) {
       return res.status(409).json({
         error: "Category is in use and cannot be deleted",
       });
     }
 
-    // ---- delete ----
     await db.connection.run(
       `DELETE FROM CATEGORIES WHERE category_id = ?`,
       [categoryId]
     );
-
     res.status(200).json({ message: "Category deleted successfully" });
   } catch (err) {
     console.error(err);
