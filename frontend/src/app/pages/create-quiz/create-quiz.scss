@@ -1,6 +1,5 @@
-// create-quiz.scss
 .create-quiz-card {
-  max-width: 1000px; // Made the card wider
+  max-width: 1000px; 
   margin: 40px auto;
   padding: 40px;
   background: rgba(15, 23, 42, 0.98) !important;
@@ -19,9 +18,7 @@
     -webkit-text-fill-color: transparent;
   }
 
-  // --- WIDE INPUTS & HIGH VISIBILITY LABELS ---
   ::ng-deep {
-    // FORCE ALL FORM FIELDS TO BE 100% WIDE
     .mat-mdc-form-field {
       width: 100% !important;
       margin-bottom: 15px !important;

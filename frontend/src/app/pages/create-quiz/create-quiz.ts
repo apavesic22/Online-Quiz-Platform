@@ -41,67 +41,53 @@ import { AuthService } from '../../services/auth';
 export class CreateQuizPage implements OnInit {
   quizForm!: FormGroup;
   categories: any[] = [];
-  difficulties: any[] = [];
-  isVerifiedOrStaff = false;
+  difficulties = [
+    { id: 1, difficulty: 'Easy' },
+    { id: 2, difficulty: 'Medium' },
+    { id: 3, difficulty: 'Hard' },
+  ];
+  isVerifiedOrStaff: boolean = false;
 
   constructor(
     private fb: FormBuilder,
     private categoriesService: CategoriesService,
     private quizService: QuizzesService,
     private authService: AuthService,
-    public router: Router
+    private router: Router
   ) {}
 
-  ngOnInit(): void {
+  ngOnInit() {
     this.quizForm = this.fb.group({
-      quiz_name: ['', [Validators.required, Validators.minLength(3)]],
+      quiz_name: ['', Validators.required],
       category_id: [null, Validators.required],
       difficulty_id: [null, Validators.required],
-      duration: [
-        15,
-        [Validators.required, Validators.min(1), Validators.max(60)],
-      ],
+      duration: [15, [Validators.required, Validators.min(5), Validators.max(60)]],
       questions: this.fb.array([]),
     });
-    this.authService.currentUser$.subscribe((user) => {
-      this.isVerifiedOrStaff = !!user?.roles?.some((r) =>
-        [1, 2, 3].includes(r)
+
+    this.authService.whoami().subscribe((user) => {
+      this.isVerifiedOrStaff = !!(
+        user && 
+        ((user.role_id && user.role_id >= 1 && user.role_id <= 3) || user.verified)
       );
+
       if (!this.isVerifiedOrStaff) {
+        this.quizForm.get('duration')?.setValue(15);
         this.quizForm.get('duration')?.disable();
-      } else {
-        this.quizForm.get('duration')?.enable();
       }
     });
-    this.categoriesService
-      .getCategories()
-      .subscribe((res) => (this.categories = res));
-    this.quizService
-      .getDifficulties()
-      .subscribe((res) => (this.difficulties = res));
 
+    this.categoriesService.getCategories().subscribe((data) => (this.categories = data));
     this.addQuestion();
   }
 
   get questions() {
     return this.quizForm.get('questions') as FormArray;
   }
-  getOptions(qIdx: number) {
-    return this.questions.at(qIdx).get('options') as FormArray;
-  }
 
   addQuestion() {
-    const user = (this.authService as any).currentUserSubject?.value;
-    const isVerifiedOrStaff = user?.roles?.some((r: number) =>
-      [1, 2, 3].includes(r)
-    );
+    if (!this.isVerifiedOrStaff && this.questions.length >= 5) return;
 
-    if (!this.isVerifiedOrStaff && this.questions.length >= 5) {
-      alert(
-        'Unverified users and guests are limited to 5 questions. Please verify your account to add more!'
-      );
-      return;
-    }
     const q = this.fb.group({
       text: ['', Validators.required],
       type: ['multiple', Validators.required],
@@ -115,49 +101,60 @@ export class CreateQuizPage implements OnInit {
       boolean_correct: [null],
     });
 
+    // CRITICAL FIX: Handle switching between Multiple Choice and True/False
     q.get('type')?.valueChanges.subscribe((type) => {
       const optionsArray = q.get('options') as FormArray;
-
-      if (type === 'multiple') {
-        // 1. Enable Multiple Choice Validators
-        q.get('correct_answer_index')?.setValidators(Validators.required);
-
-        // 2. RE-ADD validators to the 4 text options
-        optionsArray.controls.forEach((control) => {
-          control.setValidators(Validators.required);
-          control.updateValueAndValidity();
-        });
-
-        // 3. Clear True/False
-        q.get('boolean_correct')?.clearValidators();
-        q.get('boolean_correct')?.setValue(null);
-      } else {
-        // 1. Enable True/False Validator
-        q.get('boolean_correct')?.setValidators(Validators.required);
-
-        // 2. REMOVE validators from the 4 text options
-        optionsArray.controls.forEach((control) => {
+      
+      if (type === 'boolean') {
+        // 1. Boolean logic
+        q.get('boolean_correct')?.setValidators([Validators.required]);
+        
+        // 2. Clear Multiple Choice logic
+        q.get('correct_answer_index')?.clearValidators();
+        q.get('correct_answer_index')?.setValue(null);
+        
+        // 3. REMOVE Validators from the 4 input fields
+        optionsArray.controls.forEach(control => {
           control.clearValidators();
           control.updateValueAndValidity();
         });
-
-        // 3. Clear Multiple Choice index
-        q.get('correct_answer_index')?.clearValidators();
-        q.get('correct_answer_index')?.setValue(null);
+      } else {
+        // 1. Multiple Choice logic
+        q.get('correct_answer_index')?.setValidators([Validators.required]);
+        
+        // 2. Clear Boolean logic
+        q.get('boolean_correct')?.clearValidators();
+        q.get('boolean_correct')?.setValue(null);
+        
+        // 3. RESTORE Validators to the 4 input fields
+        optionsArray.controls.forEach(control => {
+          control.setValidators([Validators.required]);
+          control.updateValueAndValidity();
+        });
       }
-
       q.get('boolean_correct')?.updateValueAndValidity();
       q.get('correct_answer_index')?.updateValueAndValidity();
     });
 
     this.questions.push(q);
   }
+
+  removeQuestion(index: number) {
+    this.questions.removeAt(index);
+  }
+
+  getOptions(qIndex: number) {
+    return (this.questions.at(qIndex).get('options') as FormArray).controls;
+  }
+
+  cancel() {
+    this.router.navigate(['/']);
+  }
+
   submitQuiz() {
     if (this.quizForm.invalid) {
-      alert(
-        'Please fill out all fields and select the correct answer for every question.'
-      );
-      return;
+       alert('Please fill out all fields correctly.');
+       return;
     }
 
     const rawData = this.quizForm.getRawValue();
@@ -165,10 +162,10 @@ export class CreateQuizPage implements OnInit {
       ...rawData,
       duration: Number(rawData.duration),
       questions: rawData.questions.map((q: any) => {
-        const actualAnswer =
-          q.type === 'multiple'
-            ? q.options[q.correct_answer_index]
-            : q.boolean_correct;
+        const actualAnswer = q.type === 'multiple' 
+          ? q.options[q.correct_answer_index] 
+          : q.boolean_correct;
+        
         return {
           text: q.text,
           type: q.type,
@@ -180,21 +177,10 @@ export class CreateQuizPage implements OnInit {
 
     this.quizService.createQuiz(finalData).subscribe({
       next: () => {
-        alert(
-          this.authService.isLoggedIn()
-            ? 'Quiz created!'
-            : 'Quiz created as Guest!'
-        );
+        alert('Quiz created successfully!');
         this.router.navigate(['/']);
       },
-      error: (err) => {
-        console.error('Frontend Error:', err);
-        alert('Unable to finalize quiz. Check server console for details.');
-      },
+      error: (err) => console.error(err)
     });
-  }
-
-  cancel(): void {
-    this.router.navigate(['/']); // Redirects to the home page
   }
 }

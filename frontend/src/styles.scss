@@ -50,3 +50,10 @@ body {
   vertical-align: middle;
   margin-left: 4px;
 }
+
+input, 
+textarea, 
+[contenteditable="true"],
+.mat-mdc-form-field-input-control {
+  caret-color: #06b6d4 !important; 
+}

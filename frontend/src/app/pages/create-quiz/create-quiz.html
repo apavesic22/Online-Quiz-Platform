@@ -5,11 +5,7 @@
     <div class="quiz-info-section">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Quiz Title</mat-label>
-        <input
-          matInput
-          formControlName="quiz_name"
-          placeholder="e.g. History Masters"
-        />
+        <input matInput formControlName="quiz_name" placeholder="e.g. History Masters" />
       </mat-form-field>
 
       <div class="selection-row">
@@ -30,100 +26,73 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Duration (5-60s)</mat-label>
+          <input matInput type="number" formControlName="duration" />
+          <mat-hint *ngIf="!isVerifiedOrStaff">Verified users can change this.</mat-hint>
+        </mat-form-field>
       </div>
     </div>
 
     <div formArrayName="questions">
-      <div
-        *ngFor="let q of questions.controls; let i = index"
-        [formGroupName]="i"
-        class="question-item"
-      >
-        <div class="question-header">
-          <h4>Question #{{ i + 1 }}</h4>
-          <button
-            mat-icon-button
-            color="warn"
-            type="button"
-            (click)="questions.removeAt(i)"
-            title="Remove Question"
-          >
-            <mat-icon>delete_forever</mat-icon>
+      <div *ngFor="let q of questions.controls; let i = index" [formGroupName]="i" class="question-item">
+        <div class="q-header">
+          <h4>Question {{ i + 1 }}</h4>
+          <button mat-icon-button color="warn" type="button" (click)="removeQuestion(i)" *ngIf="questions.length > 1">
+            <mat-icon>delete</mat-icon>
           </button>
         </div>
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Question Text</mat-label>
-          <textarea
-            matInput
-            formControlName="question_text"
-            rows="2"
-            placeholder="Type your question here..."
-          ></textarea>
+          <textarea matInput formControlName="text" rows="2"></textarea>
         </mat-form-field>
 
-        <div formArrayName="answers" class="answers-container">
-          <div
-            *ngFor="let a of getOptions(i).controls; let j = index"
-            class="answer-row"
-          >
-            <mat-radio-button
-              [value]="j"
-              [checked]="q.get('correct_answer')?.value === j"
-              (change)="q.get('correct_answer')?.setValue(j)"
-            >
-              <mat-form-field appearance="outline" class="answer-field">
-                <mat-label>Answer {{ j + 1 }}</mat-label>
-                <input
-                  matInput
-                  [formControlName]="j"
-                  placeholder="Enter answer..."
-                />
-              </mat-form-field>
-            </mat-radio-button>
-          </div>
+        <div class="type-selector">
+          <label>Question Type:</label>
+          <mat-radio-group formControlName="type">
+            <mat-radio-button value="multiple">Multiple Choice</mat-radio-button>
+            <mat-radio-button value="boolean">True / False</mat-radio-button>
+          </mat-radio-group>
+        </div>
+
+        <div *ngIf="q.get('type')?.value === 'multiple'" class="options-container">
+          <mat-radio-group formControlName="correct_answer_index">
+            <div formArrayName="options" class="options-grid">
+              <div *ngFor="let opt of getOptions(i); let j = index" class="option-row">
+                <mat-radio-button [value]="j">
+                  <mat-form-field appearance="outline" class="answer-field">
+                    <mat-label>Answer {{ j + 1 }}</mat-label>
+                    <input matInput [formControlName]="j" placeholder="Enter answer..." />
+                  </mat-form-field>
+                </mat-radio-button>
+              </div>
+            </div>
+          </mat-radio-group>
+        </div>
+
+        <div *ngIf="q.get('type')?.value === 'boolean'" class="boolean-container">
+          <mat-radio-group formControlName="boolean_correct">
+            <mat-radio-button value="True">True</mat-radio-button>
+            <mat-radio-button value="False">False</mat-radio-button>
+          </mat-radio-group>
         </div>
       </div>
     </div>
 
     <div class="form-actions-container">
-      <p
-        *ngIf="questions.length >= 5 && !isVerifiedOrStaff"
-        class="limit-warning"
-      >
-        <mat-icon>info</mat-icon>
-        Question limit reached for unverified users.
+      <p *ngIf="questions.length >= 5 && !isVerifiedOrStaff" class="limit-warning">
+        <mat-icon>info</mat-icon> Question limit (5) reached for unverified users.
       </p>
 
-      <button
-        mat-stroked-button
-        type="button"
-        class="add-btn"
-        (click)="addQuestion()"
-        [disabled]="questions.length >= 5 && !isVerifiedOrStaff"
-      >
-        <mat-icon>add_circle_outline</mat-icon>
-        Add New Question
+      <button mat-stroked-button type="button" class="add-btn" (click)="addQuestion()" [disabled]="questions.length >= 5 && !isVerifiedOrStaff">
+        <mat-icon>add_circle_outline</mat-icon> Add New Question
       </button>
 
       <div class="submit-group">
-        <button
-          mat-button
-          type="button"
-          class="cancel-btn"
-          (click)="cancel()"
-        >
-          Cancel
-        </button>
-
-        <button
-          mat-raised-button
-          color="primary"
-          type="submit"
-          class="submit-btn"
-          [disabled]="!quizForm.valid"
-        >
-          <mat-icon>rocket_launch</mat-icon>
+        <button mat-button type="button" class="cancel-btn" (click)="cancel()">Cancel</button>
+        <button mat-raised-button color="primary" type="submit" [disabled]="quizForm.invalid">
           Create Quiz
         </button>
       </div>
