@@ -10,7 +10,7 @@ import { ConfirmDialogComponent } from '../../dialogs/confirm-dialog/confirm-dia
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { MatFormField, MatLabel, MatInputModule } from '@angular/material/input';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
-import { AuthService } from '../../services/auth';
+import { AuthService } from '../../services/authService';
 import { UserFormDialogComponent } from '../../dialogs/user-form-dialog/user-form-dialog';
 
 @Component({

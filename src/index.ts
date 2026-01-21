@@ -7,9 +7,9 @@ import { openDb } from "./helpers/db";
 import { authRouter, initAuth } from "./helpers/auth";
 import { usersRouter } from "./api/users";
 import { quizzesRouter } from "./api/quizzes";
-import { questionsRouter } from "./api/questions";
 import { categoriesRouter } from "./api/categories";
 import { suggestionsRouter } from "./api/suggestions";
+import { difficultiesRouter } from "./api/difficulties";
 
 config({ quiet: true });
 
@@ -38,9 +38,9 @@ async function main() {
 
   app.use(apiUrl + "/users", usersRouter);
   app.use(apiUrl + "/quizzes", quizzesRouter);
-  app.use(apiUrl + "/questions", questionsRouter);
   app.use(apiUrl + "/categories", categoriesRouter);
   app.use(apiUrl + "/suggestions", suggestionsRouter);
+  app.use(apiUrl + "/difficulties", difficultiesRouter);
 
   app.use(errorHandler);
 

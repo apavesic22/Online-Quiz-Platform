@@ -6,7 +6,7 @@ import { RouterModule } from '@angular/router';
 import { QuizzesService } from '../../services/quizzesService';
 import { HttpClient } from '@angular/common/http';
 import { MatIcon } from '@angular/material/icon';
-import { AuthService } from '../../services/auth';
+import { AuthService } from '../../services/authService';
 import { Subscription } from 'rxjs';
 import { User } from '../../models/user';
 import { MatSnackBar } from '@angular/material/snack-bar';

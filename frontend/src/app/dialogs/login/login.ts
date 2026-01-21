@@ -14,7 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { RegisterDialog } from '../register/register';
-import { AuthService } from '../../services/auth';
+import { AuthService } from '../../services/authService';
 
 @Component({
   selector: 'login-dialog',

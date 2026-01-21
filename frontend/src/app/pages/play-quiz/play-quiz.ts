@@ -6,7 +6,7 @@ import { interval, Subscription } from 'rxjs';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { QuizzesService } from '../../services/quizzesService';
 import { QuizQuestion, QuizAnswer } from '../../models/quiz-question';
-import { AuthService } from '../../services/auth';
+import { AuthService } from '../../services/authService';
 import { User } from '../../models/user';
 import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
 import { RouterModule } from '@angular/router';

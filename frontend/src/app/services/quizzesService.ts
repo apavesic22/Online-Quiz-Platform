@@ -23,11 +23,7 @@ export class QuizzesService {
   ): Observable<any> {
     return this.http.post(`${this.apiUrl}/${quizId}/submit`, { answers });
   }
-
-  getDifficulties(): Observable<any[]> {
-    return this.http.get<any[]>('/api/quizzes/difficulties');
-  }
-
+  
   createQuiz(quizData: any): Observable<any> {
     return this.http.post(this.apiUrl, quizData);
   }

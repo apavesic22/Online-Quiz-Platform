@@ -9,7 +9,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { AuthService } from './services/auth';
+import { AuthService } from './services/authService';
 import { LoginDialog } from './dialogs/login/login';
 import { SuggestionDialogComponent } from './dialogs/suggestions/suggestions';
 import { User } from './models/user';

@@ -17,9 +17,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatIconModule } from '@angular/material/icon';
 
-import { CategoriesService } from '../../services/categories';
+import { CategoriesService } from '../../services/categoriesService';
 import { QuizzesService } from '../../services/quizzesService';
-import { AuthService } from '../../services/auth';
+import { AuthService } from '../../services/authService';
+import { DifficultiesService } from '../../services/difficultiesService';
 
 @Component({
   selector: 'create-quiz-page',
@@ -41,11 +42,7 @@ import { AuthService } from '../../services/auth';
 export class CreateQuizPage implements OnInit {
   quizForm!: FormGroup;
   categories: any[] = [];
-  difficulties = [
-    { id: 1, difficulty: 'Easy' },
-    { id: 2, difficulty: 'Medium' },
-    { id: 3, difficulty: 'Hard' },
-  ];
+  difficulties: any[] = [];
   isVerifiedOrStaff: boolean = false;
 
   constructor(
@@ -53,6 +50,7 @@ export class CreateQuizPage implements OnInit {
     private categoriesService: CategoriesService,
     private quizService: QuizzesService,
     private authService: AuthService,
+    private difficultiesService: DifficultiesService,
     private router: Router
   ) {}
 
@@ -78,6 +76,10 @@ export class CreateQuizPage implements OnInit {
     });
 
     this.categoriesService.getCategories().subscribe((data) => (this.categories = data));
+    this.difficultiesService.getDifficulties().subscribe((data: any) => {
+      this.difficulties = data;
+    });
+
     this.addQuestion();
   }
 

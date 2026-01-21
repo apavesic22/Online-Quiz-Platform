@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../services/auth';
+import { AuthService } from '../../services/authService';
 
 @Component({
   selector: 'register-dialog',
