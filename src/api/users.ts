@@ -5,6 +5,7 @@ import { User } from "../model/user";
 
 export const usersRouter = Router();
 
+//Get all users
 usersRouter.get("/", requireRole([1, 2]), async (req, res) => {
   try {
     if (!db.connection) {
@@ -54,6 +55,7 @@ usersRouter.get("/", requireRole([1, 2]), async (req, res) => {
   }
 });
 
+//Get leaderboard for users
 usersRouter.get("/leaderboard", async (req, res) => {
   try {
     if (!db.connection)
@@ -81,6 +83,7 @@ usersRouter.get("/leaderboard", async (req, res) => {
   }
 });
 
+//Endpoint to create a new user
 usersRouter.post("/", requireRole([1, 2]), async (req, res) => {
   try {
     if (!db.connection) {
@@ -135,6 +138,7 @@ usersRouter.post("/", requireRole([1, 2]), async (req, res) => {
   }
 });
 
+//Get user by username
 usersRouter.get("/:username", requireRole([1, 2]), async (req, res) => {
   try {
     if (!db.connection) {
@@ -176,6 +180,7 @@ usersRouter.get("/:username", requireRole([1, 2]), async (req, res) => {
   }
 });
 
+//Update user by username
 usersRouter.put("/:username", requireRole([1, 2]), async (req, res) => {
   try {
     if (!db.connection)
@@ -240,6 +245,7 @@ usersRouter.put("/:username", requireRole([1, 2]), async (req, res) => {
   }
 });
 
+//Delete user by username
 usersRouter.delete(
   "/:username",
   requireRole([1, 2]),
