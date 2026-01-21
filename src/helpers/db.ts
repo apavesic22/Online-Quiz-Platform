@@ -322,7 +322,6 @@ export async function seedRoles(): Promise<void> {
 export async function seedUsers(): Promise<void> {
   if (!db.connection) throw new Error("DB not open");
 
-  // --- fixed system users (Unchanged) ---
   const seed = [
     { role_id: 1, username: "admin", email: "admin@quizify.local", password: process.env.SEED_ADMIN_PASSWORD || "Admin123", verified: 1 },
     { role_id: 2, username: "manager", email: "manager@quizify.local", password: process.env.SEED_MANAGER_PASSWORD || "Manager123", verified: 1 },
@@ -332,7 +331,6 @@ export async function seedUsers(): Promise<void> {
 
   const FAKE_USERS_COUNT = parseInt(process.env.DBFAKEUSERS || "20");
 
-  // Insert fixed users
   for (const u of seed) {
     await db.connection.run(
       `INSERT OR IGNORE INTO USERS (role_id, username, email, password_hash, verified, rank, total_score)
@@ -341,7 +339,6 @@ export async function seedUsers(): Promise<void> {
     );
   }
 
-  // --- faker users logic with dynamic role_id ---
   for (let i = 0; i < FAKE_USERS_COUNT; i++) {
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
@@ -349,10 +346,8 @@ export async function seedUsers(): Promise<void> {
     const email = faker.internet.email({ firstName, lastName }).toLowerCase();
     const password_hash = hashPassword("User123");
 
-    // 1. Generate the verified status first
     const isVerified = faker.datatype.boolean() ? 1 : 0;
 
-    // 2. Set role_id based on verified status: 3 if verified, 4 if not
     const roleId = isVerified === 1 ? 3 : 4;
 
     await db.connection.run(
@@ -403,7 +398,6 @@ export async function seedRealQuizzes(): Promise<void> {
 
       const quizId = quizResult.lastID!;
 
-      // 3. Loop through questions in this quiz
       for (let i = 0; i < quiz.qs.length; i++) {
         const questionObj = quiz.qs[i];
 
@@ -422,7 +416,6 @@ export async function seedRealQuizzes(): Promise<void> {
 
         const questionId = qRes.lastID!;
 
-        // 4. Loop through the 4 answers provided for this question
         for (const answerText of questionObj.a) {
           const isCorrect = (answerText === questionObj.c) ? 1 : 0;
 

@@ -52,7 +52,6 @@ import { CommonModule } from '@angular/common';
     </form>
   `,
   styles: [`
-    /* 1. Dialog Wrapper & Container */
     ::ng-deep .mat-mdc-dialog-container .mdc-dialog__surface {
       background: rgba(15, 23, 42, 0.98) !important;
       backdrop-filter: blur(25px);
@@ -62,7 +61,6 @@ import { CommonModule } from '@angular/common';
       box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5) !important;
     }
 
-    /* 2. Title Styling */
     .mat-mdc-dialog-title {
       display: flex;
       align-items: center;
@@ -89,7 +87,6 @@ import { CommonModule } from '@angular/common';
       font-size: 0.9rem;
     }
 
-    /* 3. Form Field Customization (Matching Search Field) */
     .dialog-content {
       display: flex;
       flex-direction: column;
@@ -109,11 +106,9 @@ import { CommonModule } from '@angular/common';
     ::ng-deep .mdc-floating-label { color: rgba(255, 255, 255, 0.6) !important; }
     ::ng-deep .mat-mdc-form-field-icon-prefix { color: #06b6d4 !important; margin-right: 8px; }
 
-    /* 4. Select Dropdown Fixes */
     ::ng-deep .mat-mdc-select-value { color: #fff !important; }
     ::ng-deep .mat-mdc-select-arrow { color: #06b6d4 !important; }
 
-    /* 5. Error Box */
     .custom-error {
       display: flex;
       align-items: center;
@@ -130,7 +125,6 @@ import { CommonModule } from '@angular/common';
       mat-icon { font-size: 18px; width: 18px; height: 18px; }
     }
 
-    /* 6. Action Buttons */
     .mat-mdc-dialog-actions {
       padding: 20px 0 10px 0 !important;
       gap: 12px;
@@ -175,7 +169,6 @@ export class UserFormDialogComponent  {
     }, { validators: this.verifyRoleConstraint });
   }
 
-  // Constraint: Role 4 cannot be Verified
   verifyRoleConstraint(group: FormGroup) {
     const role = group.get('role_id')?.value;
     const verified = group.get('verified')?.value;

@@ -14,7 +14,6 @@ import { MatIconModule } from '@angular/material/icon';
   styleUrls: ['./leaderboard-page.scss']
 })
 export class LeaderboardPage implements OnInit {
-  // Columns to display in the table
   displayedColumns: string[] = ['rank', 'username', 'score'];
   dataSource: any[] = [];
   currentUser: any = null;

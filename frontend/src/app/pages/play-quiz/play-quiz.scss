@@ -1,5 +1,3 @@
-// play-quiz.scss
-
 .play-container {
   max-width: 850px;
   margin: 40px auto;
@@ -22,12 +20,12 @@
 
 .answers {
   display: grid;
-  grid-template-columns: 1fr 1fr; // Grid instead of List
+  grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
 .answer-btn {
-  height: 100px !important; // Bigger tap targets
+  height: 100px !important;
   font-size: 1.2rem !important;
   border-radius: 16px !important;
   background: rgba(255, 255, 255, 0.03) !important;

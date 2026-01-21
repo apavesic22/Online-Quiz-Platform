@@ -1,5 +1,3 @@
-// manage-suggestions.scss
-
 .manage-container {
   padding: 40px 24px;
   max-width: 1300px;
@@ -17,7 +15,6 @@
     letter-spacing: -1px;
   }
 
-  // 1. THE GRID
   .suggestions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
@@ -25,7 +22,6 @@
     margin-top: 20px;
   }
 
-  // 2. THE SUGGESTION CARDS
   .suggestion-card {
     display: flex;
     flex-direction: column;
@@ -86,7 +82,6 @@
       }
     }
 
-    // 3. STATUS BORDER GLOWS
     &.approved {
       border-left: 6px solid #10b981 !important;
       background: rgba(16, 185, 129, 0.03) !important;
@@ -104,7 +99,6 @@
       border-left: 6px solid #8b5cf6 !important;
     }
 
-    // 4. ACTION BAR (BUTTON SPACING FIXED HERE)
     mat-divider { border-color: rgba(255, 255, 255, 0.05); }
 
     mat-card-actions {
@@ -112,10 +106,10 @@
       background: rgba(0, 0, 0, 0.2);
       display: flex !important;
       align-items: center;
-      gap: 12px; // Space between Reject and Approve buttons
+      gap: 12px; 
 
       .status-label {
-        margin-right: auto; // Pushes all buttons to the far right
+        margin-right: auto; 
         font-size: 0.8rem;
         font-weight: 800;
         letter-spacing: 1px;
@@ -123,7 +117,6 @@
         strong { color: #fff; }
       }
 
-      // Reject Button
       button[color="warn"][mat-button] {
         color: #ef4444 !important;
         font-weight: 700;
@@ -132,7 +125,6 @@
         &:hover { background: rgba(239, 68, 68, 0.1) !important; }
       }
 
-      // Approve Button
       button[mat-raised-button][color="primary"] {
         background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%) !important;
         border-radius: 12px;
@@ -149,7 +141,6 @@
         }
       }
 
-      // Reset Button
       button[mat-button]:not([color="warn"]) {
         color: #94a3b8;
         font-weight: 600;

@@ -2,16 +2,14 @@
 
 @include mat.core();
 
-// 1. Define custom colors for a "Cyber" look
-$dark-bg: #0f172a;       // Deep Slate Blue/Black
-$card-bg: #1e293b;       // Slightly lighter slate
-$accent-neon: #8b5cf6;   // Vivid Violet
-$secondary-neon: #06b6d4; // Cyber Cyan
+$dark-bg: #0f172a;       
+$card-bg: #1e293b;      
+$accent-neon: #8b5cf6;   
+$secondary-neon: #06b6d4; 
 
 $quizify-primary: mat.m2-define-palette(mat.$m2-blue-gray-palette, 900);
 $quizify-accent: mat.m2-define-palette(mat.$m2-cyan-palette, A200, A100, A400);
 
-// 2. Switch to DARK THEME
 $quizify-theme: mat.m2-define-dark-theme((
   color: (
     primary: $quizify-primary,
@@ -21,11 +19,9 @@ $quizify-theme: mat.m2-define-dark-theme((
 
 @include mat.all-component-themes($quizify-theme);
 
-// 3. Global Modern Reset
 body {
   margin: 0;
   background-color: $dark-bg;
-  // Adds a subtle mesh gradient for depth
   background-image: 
     radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.15) 0px, transparent 50%);
@@ -34,7 +30,6 @@ body {
   min-height: 100vh;
 }
 
-// Global Glassmorphism for all Material Cards
 .mat-mdc-card {
   background: rgba(30, 41, 59, 0.7) !important;
   backdrop-filter: blur(12px) saturate(180%);

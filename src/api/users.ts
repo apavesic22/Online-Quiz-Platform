@@ -5,14 +5,12 @@ import { User } from "../model/user";
 
 export const usersRouter = Router();
 
-// users.ts
 usersRouter.get("/", requireRole([1, 2]), async (req, res) => {
   try {
     if (!db.connection) {
       return res.status(500).json({ error: "Database not initialized" });
     }
 
-    // 1. Get pagination parameters from query
     const page = Math.max(parseInt(req.query.page as string) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit as string) || 10, 100);
     const offset = (page - 1) * limit;
@@ -26,7 +24,6 @@ usersRouter.get("/", requireRole([1, 2]), async (req, res) => {
     let countQuery = `SELECT COUNT(*) as count FROM USERS u`;
     const params: any[] = [];
 
-    // 2. Add filtering logic
     if (search) {
       const filter = ` WHERE u.username LIKE ?`;
       query += filter;
@@ -34,20 +31,17 @@ usersRouter.get("/", requireRole([1, 2]), async (req, res) => {
       params.push(search);
     }
 
-    // 3. Get total count for the paginator
     const totalRow = await db.connection.get<{ count: number }>(
       countQuery,
       params
     );
     const total = totalRow?.count ?? 0;
 
-    // 4. Add pagination to the main query
     query += ` ORDER BY u.rank ASC LIMIT ? OFFSET ?`;
     const queryParams = [...params, limit, offset];
 
     const users = await db.connection.all(query, queryParams);
 
-    // 5. Return structured response with metadata
     res.json({
       data: users,
       total: total,
@@ -65,7 +59,6 @@ usersRouter.get("/leaderboard", async (req, res) => {
     if (!db.connection)
       return res.status(500).json({ error: "Database not initialized" });
 
-    // Fetch Top 10 users by total_score
     const top10 = await db.connection.all(
       `SELECT username, total_score, rank FROM USERS ORDER BY rank ASC LIMIT 10`
     );
@@ -96,14 +89,12 @@ usersRouter.post("/", requireRole([1, 2]), async (req, res) => {
 
     const { username, email, password, role_id, verified } = req.body;
 
-    // ---- validation ----
     if (!username || !password || !role_id) {
       return res.status(400).json({
         error: "Missing required fields: username, password, role_id",
       });
     }
 
-    // ---- role existence ----
     const role = await db.connection.get(
       `SELECT role_id FROM USER_ROLES WHERE role_id = ?`,
       [role_id]
@@ -113,7 +104,6 @@ usersRouter.post("/", requireRole([1, 2]), async (req, res) => {
       return res.status(404).json({ error: "Role not found" });
     }
 
-    // ---- uniqueness ----
     const existing = await db.connection.get(
       `SELECT user_id FROM USERS WHERE username = ? OR email = ?`,
       [username, email ?? null]
@@ -123,7 +113,6 @@ usersRouter.post("/", requireRole([1, 2]), async (req, res) => {
       return res.status(409).json({ error: "User already exists" });
     }
 
-    // ---- insert ----
     await db.connection.run(
       `
         INSERT INTO USERS
@@ -195,7 +184,6 @@ usersRouter.put("/:username", requireRole([1, 2]), async (req, res) => {
     const { username } = req.params;
     const { email, role_id, verified } = req.body;
     const performer = req.user as User;
-    // Ensure we have a valid string for the performer
     const performerName = performer?.username || "System admin";
 
     const targetUser = await db.connection.get(
@@ -221,19 +209,16 @@ usersRouter.put("/:username", requireRole([1, 2]), async (req, res) => {
       values.push(verified);
     }
 
-    // If no data was sent at all, return early
     if (updates.length === 0)
       return res.status(400).json({ error: "No fields provided for update" });
 
     values.push(username);
 
-    // Perform the update
     await db.connection.run(
       `UPDATE USERS SET ${updates.join(", ")} WHERE username = ?`,
       values
     );
 
-    // LOGGING: Use performerName (the fallback) instead of performer.username
     if (verified !== undefined && verified !== targetUser.verified) {
       const actionType = verified === 1 ? "verified" : "unverified";
       const logMessage = `${performerName} made ${username} a ${actionType} user.`;
@@ -241,11 +226,10 @@ usersRouter.put("/:username", requireRole([1, 2]), async (req, res) => {
       await db.connection.run(
         `INSERT INTO LOGS (action_performer, action, time_of_action, user_id, quiz_id) 
      VALUES (?, ?, CURRENT_TIMESTAMP, ?, ?)`,
-        [performerName, logMessage, targetUser.user_id, null] // Added 'null' as the 5th value
+        [performerName, logMessage, targetUser.user_id, null]
       );
     }
 
-    // Always return the updated 'verified' status so frontend can sync on the 1st click
     res.status(200).json({
       message: "User updated successfully",
       verified: verified,
@@ -258,7 +242,7 @@ usersRouter.put("/:username", requireRole([1, 2]), async (req, res) => {
 
 usersRouter.delete(
   "/:username",
-  requireRole([1, 2]), // Admin + Management
+  requireRole([1, 2]),
   async (req, res) => {
     try {
       if (!db.connection) {
@@ -267,7 +251,6 @@ usersRouter.delete(
 
       const { username } = req.params;
 
-      // 1. Get user details first
       const user = await db.connection.get<{
         user_id: number;
         role_id: number;
@@ -277,36 +260,25 @@ usersRouter.delete(
         return res.status(404).json({ error: "User not found" });
       }
 
-      // 2. Security: Prevent deletion of Administrators
       if (user.role_id === 1) {
         return res.status(403).json({ error: "Cannot delete administrator accounts" });
       }
 
-      /**
-       * 3. CLEANUP PHASE (Transaction)
-       * We use a transaction to ensure either everything is deleted or nothing is.
-       */
       await db.connection.run("BEGIN TRANSACTION");
 
       try {
         const uid = user.user_id;
 
-        // A. Delete activity logs and likes
         await db.connection.run(`DELETE FROM LOGS WHERE user_id = ?`, [uid]);
         await db.connection.run(`DELETE FROM QUIZ_LIKES WHERE user_id = ?`, [uid]);
         await db.connection.run(`DELETE FROM SUGGESTIONS WHERE user_id = ? OR reviewer_id = ?`, [uid, uid]);
 
-        // B. Delete quiz attempts and their associated answers
-        // We must delete ATTEMPT_ANSWERS before QUIZ_ATTEMPTS
         await db.connection.run(`
           DELETE FROM ATTEMPT_ANSWERS 
           WHERE attempt_id IN (SELECT attempt_id FROM QUIZ_ATTEMPTS WHERE user_id = ?)
         `, [uid]);
         await db.connection.run(`DELETE FROM QUIZ_ATTEMPTS WHERE user_id = ?`, [uid]);
 
-        // C. Handle Quizzes created by this user
-        // Note: This will also delete all questions and answers for those quizzes 
-        // because we follow the chain: AnswerOptions -> Questions -> Quizzes
         await db.connection.run(`
           DELETE FROM ANSWER_OPTIONS WHERE question_id IN (
             SELECT question_id FROM QUESTIONS WHERE quiz_id IN (
@@ -321,7 +293,6 @@ usersRouter.delete(
 
         await db.connection.run(`DELETE FROM QUIZZES WHERE user_id = ?`, [uid]);
 
-        // D. Finally, delete the User record
         await db.connection.run(`DELETE FROM USERS WHERE user_id = ?`, [uid]);
 
         await db.connection.run("COMMIT");

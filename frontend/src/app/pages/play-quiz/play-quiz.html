@@ -15,7 +15,6 @@
       <div class="question-text">{{ currentQuestion.question_text }}</div>
 
       <div class="answers">
-        <!-- TRUE / FALSE -->
         @if (currentQuestion.type === 'True/False') { @for (answer of
         currentQuestion.answers; track answer.answer_id) {
         <button
@@ -32,7 +31,6 @@
         </button>
         } }
 
-        <!-- MULTIPLE CHOICE -->
         @else { @for (answer of currentQuestion.answers; track answer.answer_id) {
         <button
           mat-raised-button

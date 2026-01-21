@@ -5,7 +5,6 @@ import path from "path";
 import { errorHandler } from "./helpers/errors";
 import { openDb } from "./helpers/db";
 import { authRouter, initAuth } from "./helpers/auth";
-import { uploadRouter } from "./helpers/fileupload";
 import { usersRouter } from "./api/users";
 import { quizzesRouter } from "./api/quizzes";
 import { questionsRouter } from "./api/questions";
@@ -37,7 +36,6 @@ async function main() {
 
   app.use("/api/auth", authRouter);
 
-  app.use(apiUrl + "/upload", uploadRouter);
   app.use(apiUrl + "/users", usersRouter);
   app.use(apiUrl + "/quizzes", quizzesRouter);
   app.use(apiUrl + "/questions", questionsRouter);

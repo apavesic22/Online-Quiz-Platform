@@ -86,7 +86,6 @@ export class RegisterDialog {
 
     const { username, email, password } = this.form.value;
     
-    // We send only the required data; backend handles role_id=4 and verified=0
     this.auth.register({ username, email, password }).subscribe({
       next: () => {
         this.snack.open('Registration successful! Please login.', 'Close', { duration: 3000 });

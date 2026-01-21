@@ -89,7 +89,7 @@ export class LoginDialog {
   }
 
   onRegister() {
-    this.dialogRef.close(); // Close login
+    this.dialogRef.close();
     this.dialog.open(RegisterDialog, { width: '400px' });
   }
 

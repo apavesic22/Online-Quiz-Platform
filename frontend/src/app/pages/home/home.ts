@@ -47,16 +47,15 @@ export class HomePage implements OnInit {
 
   openEditDialog(quizId: number): void {
     const dialogRef = this.dialog.open(AdminQuizEditDialog, {
-      width: '800px', // Set a wide width for the quiz editor
+      width: '800px',
       maxHeight: '90vh',
       data: { quiz_id: quizId },
-      panelClass: 'glass-dialog', // If you have custom glassmorphism styles
+      panelClass: 'glass-dialog', 
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      // If the dialog closed and returned 'true' (saved successfully)
       if (result) {
-        this.loadQuizzes(this.currentPage); // Refresh the list to show new title/etc
+        this.loadQuizzes(this.currentPage);
       }
     });
   }
@@ -118,7 +117,6 @@ export class HomePage implements OnInit {
     this.loading = true;
     this.currentPage = page;
 
-    // Pass the page to your service (Ensure your service accepts page as an argument)
     this.quizzesService.getQuizzes(this.currentPage).subscribe({
       next: (res) => {
         this.quizzes = res.data;
@@ -130,7 +128,7 @@ export class HomePage implements OnInit {
         this.totalPages = res.totalPages;
         this.generatePageNumbers();
         this.loading = false;
-        window.scrollTo(0, 0); // Scroll to top when changing page
+        window.scrollTo(0, 0);
       },
       error: () => {
         this.loading = false;
@@ -151,7 +149,6 @@ export class HomePage implements OnInit {
     this.http
       .post<any>(`/api/quizzes/${quiz.quiz_id}/like`, {})
       .subscribe((res) => {
-        // Backend returns boolean {liked: true/false}, we convert back to 1/0 for the template
         quiz.user_has_liked = res.liked ? 1 : 0;
         quiz.likes = res.liked ? (quiz.likes || 0) + 1 : (quiz.likes || 1) - 1;
       });

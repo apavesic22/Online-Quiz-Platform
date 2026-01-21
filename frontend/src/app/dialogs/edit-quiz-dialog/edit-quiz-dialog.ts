@@ -22,7 +22,6 @@ import { CommonModule } from '@angular/common';
 @Component({
   standalone: true,
   selector: 'app-admin-quiz-edit-dialog',
-  // FIX: Import the Modules, not the classes
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -99,9 +98,8 @@ import { CommonModule } from '@angular/common';
   `,
   styles: [
     `
-    /* Container Styling */
     .glass-wrapper {
-      background: rgba(15, 23, 42, 0.95); /* Deep slate */
+      background: rgba(15, 23, 42, 0.95);
       color: #f1f5f9;
       padding: 10px;
     }
@@ -126,7 +124,6 @@ import { CommonModule } from '@angular/common';
       padding-top: 20px !important;
     }
 
-    /* Meta Info Section */
     .meta-section {
         display: flex;
         flex-direction: column;
@@ -158,7 +155,6 @@ import { CommonModule } from '@angular/common';
         }
     }
 
-    /* Question Blocks */
     .question-block {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -193,7 +189,6 @@ import { CommonModule } from '@angular/common';
         &:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
     }
 
-    /* Answers */
     .answers-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -219,7 +214,6 @@ import { CommonModule } from '@angular/common';
       mat-form-field { width: 100%; }
     }
 
-    /* Form Fields Override */
     ::v-deep .mat-mdc-text-field-wrapper {
         background-color: rgba(255, 255, 255, 0.02) !important;
     }
@@ -227,7 +221,6 @@ import { CommonModule } from '@angular/common';
         background-color: transparent !important;
     }
 
-    /* Actions */
     .dialog-actions {
       padding: 20px !important;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -268,7 +261,6 @@ export class AdminQuizEditDialog implements OnInit {
   }
 
   ngOnInit() {
-    // Fetch full data including questions and answers
     this.http
       .get<any>(`/api/quizzes/${this.data.quiz_id}/QuizEdit`)
       .subscribe((quiz) => {

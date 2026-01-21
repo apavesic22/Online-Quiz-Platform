@@ -39,7 +39,6 @@ suggestionsRouter.get("/", async (req, res) => {
 
     if (!isAdminOrManagement) return res.status(403).json({ error: "Forbidden" });
 
-    // Join once for the submitter (u1) and once for the reviewer (u2)
     const suggestions = await db.connection?.all(
       `
       SELECT 
@@ -75,7 +74,6 @@ suggestionsRouter.patch("/:id/status", async (req, res) => {
     const suggestionId = req.params.id;
     const { status } = req.body; 
 
-    // 1. Allow 'pending' in the validation list
     const validStatuses = ['approved', 'rejected', 'pending'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid status" });
@@ -85,13 +83,10 @@ suggestionsRouter.patch("/:id/status", async (req, res) => {
       return res.status(500).json({ error: "Database not initialized" });
     }
 
-    // 2. Determine if we are resetting or reviewing
     const isReset = status === 'pending';
     const reviewerId = isReset ? null : (user.user_id || user.id);
     const reviewedAt = isReset ? null : new Date().toISOString();
 
-    // 3. Update the database
-    // If it's a reset, reviewer_id and reviewed_at become NULL
     const result = await db.connection.run(
       `UPDATE SUGGESTIONS 
        SET status = ?, 

@@ -62,7 +62,6 @@ categoriesRouter.post("/", async (req, res) => {
       return res.status(400).json({ error: "Invalid category_name" });
     }
 
-    // ---- check uniqueness ----
     const existing = await db.connection.get(
       `SELECT category_id FROM CATEGORIES WHERE LOWER(category_name) = LOWER(?)`,
       [trimmedName]
@@ -72,7 +71,6 @@ categoriesRouter.post("/", async (req, res) => {
       return res.status(409).json({ error: "Category already exists" });
     }
 
-    // ---- insert ----
     const result = await db.connection.run(
       `INSERT INTO CATEGORIES (category_name) VALUES (?)`,
       [trimmedName]
@@ -123,7 +121,6 @@ categoriesRouter.put("/:categoryId", async (req, res) => {
       return res.status(400).json({ error: "Invalid category_name" });
     }
 
-    // ---- check category exists ----
     const category = await db.connection.get(
       `SELECT category_id FROM CATEGORIES WHERE category_id = ?`,
       [categoryId]
@@ -133,7 +130,6 @@ categoriesRouter.put("/:categoryId", async (req, res) => {
       return res.status(404).json({ error: "Category not found" });
     }
 
-    // ---- check name uniqueness ----
     const existing = await db.connection.get(
       `
       SELECT category_id
@@ -147,7 +143,6 @@ categoriesRouter.put("/:categoryId", async (req, res) => {
       return res.status(409).json({ error: "Category name already exists" });
     }
 
-    // ---- update ----
     await db.connection.run(
       `UPDATE CATEGORIES SET category_name = ? WHERE category_id = ?`,
       [trimmedName, categoryId]
@@ -187,7 +182,6 @@ categoriesRouter.delete("/:categoryId", async (req, res) => {
       return res.status(400).json({ error: "Invalid category id" });
     }
 
-    // ---- category exists ----
     const category = await db.connection.get(
       `SELECT category_id FROM CATEGORIES WHERE category_id = ?`,
       [categoryId]
@@ -197,7 +191,6 @@ categoriesRouter.delete("/:categoryId", async (req, res) => {
       return res.status(404).json({ error: "Category not found" });
     }
 
-    // ---- check usage ----
     const usage = await db.connection.get<{ count: number }>(
       `
       SELECT COUNT(*) as count
@@ -213,7 +206,6 @@ categoriesRouter.delete("/:categoryId", async (req, res) => {
       });
     }
 
-    // ---- delete ----
     await db.connection.run(
       `DELETE FROM CATEGORIES WHERE category_id = ?`,
       [categoryId]

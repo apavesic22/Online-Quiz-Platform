@@ -4,7 +4,7 @@ import { AuthService } from '../../services/auth';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
-import { User } from '../../models/user'; // Import the fixed interface
+import { User } from '../../models/user';
 
 @Component({
   selector: 'app-profile-page',
@@ -14,7 +14,6 @@ import { User } from '../../models/user'; // Import the fixed interface
   styleUrls: ['./profile.scss']
 })
 export class ProfilePage implements OnInit {
-  // Use the User interface instead of any
   user: User | null = null; 
 
   constructor(private authService: AuthService) {}

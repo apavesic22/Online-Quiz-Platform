@@ -33,7 +33,6 @@ authRouter.post("/register", async (req: Request, res: Response) => {
       return res.status(500).json({ error: "Database not initialized" });
     }
 
-    // Check for existing user
     const existing = await db.connection.get(
       "SELECT user_id FROM USERS WHERE username = ? OR email = ?",
       [username, email]
@@ -45,14 +44,12 @@ authRouter.post("/register", async (req: Request, res: Response) => {
 
     const passwordHash = hashPassword(password);
 
-    // 1. Insert the new user with score 0 and rank 0 initially
     await db.connection.run(
       `INSERT INTO USERS (role_id, username, email, password_hash, verified, rank, total_score)
        VALUES (?, ?, ?, ?, ?, 0, 0)`,
       [4, username, email, passwordHash, 0]
     );
 
-    // 2. Recalculate ranks to put the new user in their correct position
     await recomputeUserRanks();
 
     res.status(201).json({ message: "Registration successful" });
@@ -85,7 +82,6 @@ export function verifyPassword(password: string, stored: string): boolean {
   return hash === hashToCompare;
 }
 
-// Initialize authentication
 export async function initAuth(
   app: Express,
   reset: boolean = false
@@ -117,29 +113,21 @@ export async function initAuth(
     )
   );
 
-  // Middleware setup with persistent sessions
   const SQLiteStore = SQLiteStoreFactory(session);
   app.use(
     session({
       secret: process.env.SECRETKEY || "mysecretkey",
       resave: false,
       saveUninitialized: false,
-      // store sessions in sqlite database
       store: new SQLiteStore({
         db: process.env.SESSIONSDBFILE || "./db/sessions.sqlite3",
       }) as session.Store,
-      cookie: { maxAge: 86400000 }, // default 1 day
+      cookie: { maxAge: 86400000 }, 
     })
   );
 
   app.use(passport.initialize());
   app.use(passport.session());
-  /*
-  if(reset) {
-    users.length = 0;
-  }
-  if(users.length > 0) return; // already initialized
-  */
 }
 
 async function findUserById(id: number): Promise<User | undefined> {
@@ -212,7 +200,7 @@ async function findUserByUsername(username: string): Promise<User | undefined> {
     id: row.user_id,
     username: row.username,
     password: row.password_hash,
-    roles: [row.role_id], // single role → array
+    roles: [row.role_id], 
     email: row.email,
     total_score: 0,
     verified: row.verified,
@@ -221,7 +209,6 @@ async function findUserByUsername(username: string): Promise<User | undefined> {
   };
 }
 
-// Serialize user to store in session (User -> user.id)
 passport.serializeUser((user: Express.User, done) => {
   done(null, (user as User).id);
 });
@@ -250,18 +237,6 @@ authRouter.post(
   }
 );
 
-/**
- * @api {delete} /api/auth Logout user
- * @apiGroup Authentication
- * @apiName Logout
- *
- * @apiDescription
- * Logs out the currently authenticated user by terminating their session.
- *
- * @apiSuccess {String} message Logout confirmation message
- *
- * @apiUse HttpError
- */
 authRouter.delete("", (req: Request, res: Response, next: NextFunction) => {
   const authReq = req as AuthRequest;
   authReq.logout((err) => {
@@ -270,21 +245,6 @@ authRouter.delete("", (req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-/**
- * @api {get} /api/auth Who am I
- * @apiGroup Authentication
- * @apiName WhoAmI
- *
- * @apiDescription
- * Returns information about the currently authenticated user.
- * If no user is logged in, `username` and `roles` will be `null`.
- *
- * @apiSuccess {String|null} username Authenticated user's username or null if not logged in
- * @apiSuccess {Number[]|null} roles List of user's role IDs or null if not logged in
- * @apiSuccess {String|null} email User's email address or null if not logged in
- *
- * @apiUse HttpError
- */
 authRouter.get("", (req: Request, res: Response) => {
   if (req.isAuthenticated()) {
     const user = req.user as User;

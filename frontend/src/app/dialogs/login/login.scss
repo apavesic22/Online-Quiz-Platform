@@ -1,6 +1,4 @@
-// login-dialog.scss
 ::ng-deep {
-  // 1. The Dialog Surface (Main Container)
   .mat-mdc-dialog-container .mdc-dialog__surface {
     background: rgba(15, 23, 42, 0.98) !important; 
     backdrop-filter: blur(25px);
@@ -11,7 +9,6 @@
     min-width: 450px !important;
   }
 
-  // 2. The Title (Glow Gradient)
   .mat-mdc-dialog-title {
     font-size: 2.2rem !important;
     font-weight: 800 !important;
@@ -24,7 +21,6 @@
     letter-spacing: -1px;
   }
 
-  // 3. Wide Inputs & High Visibility Labels
   .mat-mdc-dialog-content {
     padding: 10px 0 !important;
     overflow: visible !important;
@@ -35,25 +31,22 @@
       margin-bottom: 12px !important;
     }
 
-    // High Visibility Label (Idle)
     .mdc-floating-label {
       color: rgba(255, 255, 255, 0.9) !important;
       font-size: 1.1rem !important;
     }
 
-    // Label when Focused (Cyan Glow)
     .mat-mdc-form-field.mat-focused .mdc-floating-label {
       color: #06b6d4 !important;
       font-weight: 800 !important;
       text-shadow: 0 0 10px rgba(6, 182, 212, 0.6);
     }
 
-    // Standard Text Box Wrapper
     .mat-mdc-text-field-wrapper {
       min-height: 65px !important;
       background-color: rgba(255, 255, 255, 0.07) !important;
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      border-radius: 14px !important; // Your desired radius
+      border-radius: 14px !important;
       transition: all 0.3s ease !important;
       
       &:hover {
@@ -62,23 +55,21 @@
       }
     }
 
-    // --- FIX FOR RED ERROR BORDER ALIGNMENT ---
     .mat-mdc-form-field.mat-form-field-invalid {
       .mat-mdc-text-field-wrapper {
-        border: 1px solid #ff4d4d !important; // Vibrant red
-        border-radius: 14px !important; // Forces radius to match standard
+        border: 1px solid #ff4d4d !important;
+        border-radius: 14px !important;
         box-shadow: 0 0 10px rgba(255, 77, 77, 0.15);
       }
       
       .mdc-floating-label {
-        color: #ff4d4d !important; // Labels stay visible when red
+        color: #ff4d4d !important;
       }
 
-      // Sync the sub-parts of the Material outline to match the radius
       .mdc-notched-outline__leading,
       .mdc-notched-outline__notch,
       .mdc-notched-outline__trailing {
-        border-color: transparent !important; // Hide default sub-borders
+        border-color: transparent !important;
         border-radius: 14px !important;
       }
     }
@@ -91,7 +82,6 @@
     .mdc-line-ripple { display: none !important; }
   }
 
-  // 4. Register Link Styling
   .register-footer {
     margin: 20px 0;
     text-align: center;
@@ -113,7 +103,6 @@
     }
   }
 
-  // 5. Action Buttons
   .mat-mdc-dialog-actions {
     justify-content: flex-end;
     gap: 15px;

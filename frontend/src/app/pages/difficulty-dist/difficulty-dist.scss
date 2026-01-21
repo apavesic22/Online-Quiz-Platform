@@ -1,11 +1,10 @@
-// difficulty-dist.scss
 .dist-container {
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 60px 20px;
   min-height: 90vh;
-  background: transparent; // Uses the body gradient
+  background: transparent;
 
   .dist-card {
     width: 100%;
@@ -33,7 +32,6 @@
     position: relative;
     height: 450px;
     margin: 20px 0;
-    // Adds a subtle glow behind the pie chart
     &::after {
       content: '';
       position: absolute;

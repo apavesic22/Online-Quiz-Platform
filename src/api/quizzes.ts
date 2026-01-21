@@ -18,7 +18,6 @@ quizzesRouter.post("/", async (req, res) => {
 
     const userRole =
       user?.role_id || (Array.isArray(user?.roles) ? user.roles[0] : null);
-    // Check roles: 1=Admin, 2=Management, 3=Verified
     const isVerifiedOrStaff = user?.roles?.some((r: number) =>
       [1, 2, 3].includes(userRole)
     );
@@ -27,7 +26,6 @@ quizzesRouter.post("/", async (req, res) => {
       ? Math.min(Math.max(duration || 15, 1), 60)
       : 15;
 
-    // Enforcement: If NOT verified/staff and trying to add more than 5 questions, REJECT
     if (!isVerifiedOrStaff && questions.length > 5) {
       return res.status(403).json({
         error:
@@ -37,7 +35,7 @@ quizzesRouter.post("/", async (req, res) => {
 
     let userId: number = 4;
     if (req.isAuthenticated() && user) {
-      userId = user.user_id || user.id; // Tries both common naming conventions
+      userId = user.user_id || user.id;
     }
 
     console.log(
@@ -45,13 +43,12 @@ quizzesRouter.post("/", async (req, res) => {
     );
     await db.connection.run("BEGIN TRANSACTION");
 
-    // 1. Insert into QUIZZES table using provided difficulty_id
     const quizResult = await db.connection.run(
       `INSERT INTO QUIZZES 
   (user_id, category_id, difficulty_id, quiz_name, question_count, duration, is_customizable) 
   VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
-        userId, // This is now guaranteed to have a value
+        userId,
         category_id,
         difficulty_id,
         quiz_name,
@@ -74,8 +71,6 @@ quizzesRouter.post("/", async (req, res) => {
       const q = questions[i];
       const typeId = q.type === "multiple" ? 1 : 2;
 
-      // Logic for flexible time limit:
-      // Use the value from the question if user is verified, otherwise default to 15
       const timeLimit = isVerifiedOrStaff && q.time_limit ? q.time_limit : 15;
 
       const qResult = await db.connection.run(
@@ -85,7 +80,6 @@ quizzesRouter.post("/", async (req, res) => {
       );
       const questionId = qResult.lastID;
 
-      // 3. Insert ANSWER_OPTIONS
       if (q.type === "multiple") {
         for (const opt of q.options) {
           await db.connection.run(
@@ -137,7 +131,6 @@ quizzesRouter.get("/", async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 10, 100);
     const offset = (page - 1) * limit;
 
-    // Get current user ID to check for "user_has_liked" status
     const userId = req.isAuthenticated() ? (req.user as any).user_id : 0;
 
     const totalRow = await db.connection.get<{ count: number }>(`
@@ -151,7 +144,6 @@ quizzesRouter.get("/", async (req, res) => {
       return res.status(204).send();
     }
 
-    // ---- paginated data with likes and user status ----
     const quizzes = await db.connection.all(
       `
       SELECT
@@ -208,7 +200,6 @@ quizzesRouter.get("/category/:category", async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 10, 100);
     const offset = (page - 1) * limit;
 
-    // ---- check category exists ----
     const category = await db.connection.get<{ category_id: number }>(
       `SELECT category_id FROM CATEGORIES WHERE LOWER(category_name) = LOWER(?)`,
       [categoryName]
@@ -218,7 +209,6 @@ quizzesRouter.get("/category/:category", async (req, res) => {
       return res.status(404).json({ error: "Category not found" });
     }
 
-    // ---- total count ----
     const totalRow = await db.connection.get<{ count: number }>(
       `
       SELECT COUNT(*) AS count
@@ -236,7 +226,6 @@ quizzesRouter.get("/category/:category", async (req, res) => {
 
     const totalPages = Math.ceil(total / limit);
 
-    // ---- paginated data ----
     const quizzes = await db.connection.all(
       `
       SELECT
@@ -391,7 +380,6 @@ quizzesRouter.delete("/:id", async (req, res) => {
 
     const user = req.user as User;
 
-    // ---- fetch quiz ----
     const quiz = await db.connection.get<{
       quiz_id: number;
       user_id: number;
@@ -422,17 +410,12 @@ quizzesRouter.delete("/:id", async (req, res) => {
       `UPDATE LOGS SET quiz_id = NULL WHERE quiz_id = ?`,
       [quizId]
     );
-    // ---- delete in FK-safe order ----
-
-    // delete logs
     await db.connection.run(`DELETE FROM LOGS WHERE quiz_id = ?`, [quizId]);
 
-    // delete likes
     await db.connection.run(`DELETE FROM QUIZ_LIKES WHERE quiz_id = ?`, [
       quizId,
     ]);
 
-    // delete attempt answers
     await db.connection.run(
       `
       DELETE FROM ATTEMPT_ANSWERS
@@ -443,12 +426,10 @@ quizzesRouter.delete("/:id", async (req, res) => {
       [quizId]
     );
 
-    // delete attempts
     await db.connection.run(`DELETE FROM QUIZ_ATTEMPTS WHERE quiz_id = ?`, [
       quizId,
     ]);
 
-    // delete answer options
     await db.connection.run(
       `
       DELETE FROM ANSWER_OPTIONS
@@ -459,12 +440,10 @@ quizzesRouter.delete("/:id", async (req, res) => {
       [quizId]
     );
 
-    // delete questions
     await db.connection.run(`DELETE FROM QUESTIONS WHERE quiz_id = ?`, [
       quizId,
     ]);
 
-    // delete quiz
     await db.connection.run(`DELETE FROM QUIZZES WHERE quiz_id = ?`, [quizId]);
 
     res.status(200).json({ message: "Quiz deleted successfully" });
@@ -485,7 +464,6 @@ quizzesRouter.get("/:id/questions", async (req, res) => {
       return res.status(400).json({ error: "Invalid quiz id" });
     }
 
-    // ---- quiz exists ----
     const quiz = await db.connection.get(
       `SELECT quiz_id FROM QUIZZES WHERE quiz_id = ?`,
       [quizId]
@@ -495,7 +473,6 @@ quizzesRouter.get("/:id/questions", async (req, res) => {
       return res.status(404).json({ error: "Quiz not found" });
     }
 
-    // ---- fetch questions ----
     const questions = await db.connection.all<
       {
         question_id: number;
@@ -522,7 +499,6 @@ quizzesRouter.get("/:id/questions", async (req, res) => {
       return res.status(204).send();
     }
 
-    // ---- attach answers ----
     for (const q of questions) {
       const answers = await db.connection.all(
         `
@@ -692,7 +668,6 @@ quizzesRouter.get("/:id/leaderboard", async (req, res) => {
 
     const user = req.user as User;
 
-    // ---- quiz exists ----
     const quiz = await db.connection.get(
       `SELECT quiz_id FROM QUIZZES WHERE quiz_id = ?`,
       [quizId]
@@ -786,7 +761,6 @@ quizzesRouter.post("/:id/answer", async (req, res) => {
     for (const a of answers) {
       const { question_id, answer_id, time_taken_ms } = a;
 
-      // ---- validate question ----
       const question = await db.connection.get(
         `SELECT question_id FROM QUESTIONS WHERE question_id = ? AND quiz_id = ?`,
         [question_id, quizId]
@@ -796,7 +770,6 @@ quizzesRouter.post("/:id/answer", async (req, res) => {
         return res.status(400).json({ error: "Invalid question" });
       }
 
-      // ---- validate answer ----
       const answer = await db.connection.get<{ is_correct: number }>(
         `
         SELECT is_correct
@@ -813,7 +786,6 @@ quizzesRouter.post("/:id/answer", async (req, res) => {
       const isCorrect = answer.is_correct === 1;
       if (isCorrect) score++;
 
-      // ---- store answer ----
       await db.connection.run(
         `
         INSERT INTO ATTEMPT_ANSWERS
@@ -824,7 +796,6 @@ quizzesRouter.post("/:id/answer", async (req, res) => {
       );
     }
 
-    // ---- update attempt ----
     await db.connection.run(
       `
       UPDATE QUIZ_ATTEMPTS
@@ -861,7 +832,6 @@ quizzesRouter.post("/:id/attempts", async (req, res) => {
 
     const user = req.user as User;
 
-    // ---- quiz exists ----
     const quiz = await db.connection.get(
       `SELECT quiz_id FROM QUIZZES WHERE quiz_id = ?`,
       [quizId]
@@ -871,7 +841,6 @@ quizzesRouter.post("/:id/attempts", async (req, res) => {
       return res.status(404).json({ error: "Quiz not found" });
     }
 
-    // ---- prevent multiple attempts (recommended) ----
     const existingAttempt = await db.connection.get(
       `
       SELECT attempt_id
@@ -887,7 +856,6 @@ quizzesRouter.post("/:id/attempts", async (req, res) => {
       });
     }
 
-    // ---- create attempt ----
     const result = await db.connection.run(
       `
       INSERT INTO QUIZ_ATTEMPTS
@@ -958,7 +926,6 @@ quizzesRouter.post("/:id/like", async (req, res) => {
     const quizId = Number(req.params.id);
     const user = req.user as any;
 
-    // Safety check: try user_id first, then id as a backup
     const userId = user.user_id || user.id;
 
     if (!userId) {
@@ -968,21 +935,18 @@ quizzesRouter.post("/:id/like", async (req, res) => {
         .json({ error: "User identity lost. Please re-login." });
     }
 
-    // 1. Check if like exists
     const existing = await db.connection.get(
       "SELECT * FROM QUIZ_LIKES WHERE user_id = ? AND quiz_id = ?",
       [userId, quizId]
     );
 
     if (existing) {
-      // 2. Remove like
       await db.connection.run(
         "DELETE FROM QUIZ_LIKES WHERE user_id = ? AND quiz_id = ?",
         [userId, quizId]
       );
       return res.json({ liked: false });
     } else {
-      // 3. Add like
       await db.connection.run(
         "INSERT INTO QUIZ_LIKES (user_id, quiz_id) VALUES (?, ?)",
         [userId, quizId]
@@ -990,7 +954,6 @@ quizzesRouter.post("/:id/like", async (req, res) => {
       return res.json({ liked: true });
     }
   } catch (err) {
-    // This will show exactly what crashed in your terminal/console
     console.error("SQL Error in Like Route:", err);
     res.status(500).json({ error: "Internal Server Error during Like toggle" });
   }

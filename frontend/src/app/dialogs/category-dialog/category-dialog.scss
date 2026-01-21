@@ -1,17 +1,14 @@
-// category-dialog.scss
 ::ng-deep {
-  // 1. Target the Dialog Surface (The Card)
   .mat-mdc-dialog-container .mdc-dialog__surface {
-    background: rgba(15, 23, 42, 0.98) !important; // Deep navy background
+    background: rgba(15, 23, 42, 0.98) !important;
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
     border-radius: 28px !important;
     padding: 30px !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
-    min-width: 500px !important; // Forces the dialog to be wide
+    min-width: 500px !important;
   }
 
-  // 2. The Title (Neon Gradient)
   .mat-mdc-dialog-title {
     font-size: 2rem !important;
     font-weight: 800 !important;
@@ -23,32 +20,28 @@
     margin-bottom: 10px !important;
   }
 
-  // 3. Wide Input Field & Visible Labels
   .mat-mdc-dialog-content {
-    padding: 20px 0 !important; // Remove side padding so input can stretch
+    padding: 20px 0 !important;
     overflow: visible !important;
 
     .mat-mdc-form-field {
-      width: 100% !important; // FULL WIDTH
+      width: 100% !important;
       display: block !important;
     }
 
-    // High visibility Label (Idle)
     .mdc-floating-label {
       color: rgba(255, 255, 255, 0.9) !important;
       font-size: 1.1rem !important;
     }
 
-    // Label when Focused (Cyan Glow)
     .mat-mdc-form-field.mat-focused .mdc-floating-label {
       color: #06b6d4 !important;
       font-weight: 800 !important;
       text-shadow: 0 0 10px rgba(6, 182, 212, 0.6);
     }
 
-    // The Large Text Box Wrapper
     .mat-mdc-text-field-wrapper {
-      min-height: 70px !important; // Physically bigger box
+      min-height: 70px !important;
       background-color: rgba(255, 255, 255, 0.07) !important;
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
       border-radius: 14px !important;
@@ -60,32 +53,29 @@
       }
     }
 
-    // Input Text color
     .mat-mdc-input-element {
       color: #ffffff !important;
       font-size: 1.1rem !important;
       caret-color: #06b6d4 !important;
     }
 
-    // Hide the default underline ripple
     .mdc-line-ripple {
       display: none !important;
     }
   }
 
-  // 4. Action Buttons (Prettified with Spacing)
   .mat-mdc-dialog-actions {
     justify-content: flex-end;
-    gap: 20px; // Space between Cancel and Save
+    gap: 20px;
     padding-top: 20px !important;
 
-    .mat-button { // Cancel button
+    .mat-button {
       color: #94a3b8 !important;
       font-weight: 600;
       &:hover { color: #fff !important; }
     }
 
-    .mat-raised-button { // Save button
+    .mat-raised-button {
       background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%) !important;
       color: white !important;
       height: 50px;

@@ -33,7 +33,6 @@ export class PlayQuizPage implements OnInit, OnDestroy {
 
   loading = true;
 
-  // ---- game state ----
   timeLeft = 15;
   timerSub?: Subscription;
   answered = false;
@@ -81,7 +80,6 @@ export class PlayQuizPage implements OnInit, OnDestroy {
     this.stopTimer();
   }
 
-  // ---------------- TIMER ----------------
 
   startTimer() {
     this.stopTimer();
@@ -100,7 +98,6 @@ export class PlayQuizPage implements OnInit, OnDestroy {
     this.timerSub?.unsubscribe();
   }
 
-  // ---------------- ANSWERS ----------------
 
   selectAnswer(answer: QuizAnswer) {
     if (this.answered) return;
@@ -136,7 +133,6 @@ export class PlayQuizPage implements OnInit, OnDestroy {
     setTimeout(() => this.nextQuestion(), 1200);
   }
 
-  // ---------------- NAVIGATION ----------------
 
   nextQuestion() {
     this.answered = false;
@@ -180,7 +176,6 @@ export class PlayQuizPage implements OnInit, OnDestroy {
     }
   }
 
-  // ---------------- HELPERS ----------------
 
   isCorrect(answer: QuizAnswer): boolean {
     return answer.is_correct === 1;

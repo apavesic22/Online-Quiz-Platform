@@ -38,7 +38,7 @@ export class DifficultyDistComponent implements OnInit {
         labels: stats.map(s => s.label),
         datasets: [{
           data: stats.map(s => s.count),
-          backgroundColor: ['#4caf50', '#ff9800', '#f44336'], // Green (Easy), Orange (Med), Red (Hard)
+          backgroundColor: ['#4caf50', '#ff9800', '#f44336'],
           hoverOffset: 4
         }]
       },

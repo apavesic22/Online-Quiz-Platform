@@ -1,17 +1,14 @@
-// confirm-dialog.scss
 ::ng-deep {
-  // 1. The Dialog Backdrop & Surface
   .mat-mdc-dialog-container .mdc-dialog__surface {
-    background: rgba(15, 23, 42, 0.98) !important; // Deep space navy
+    background: rgba(15, 23, 42, 0.98) !important;
     backdrop-filter: blur(25px);
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
     border-radius: 24px !important;
     padding: 24px !important;
     box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8) !important;
-    max-width: 450px; // Standard width for confirmation prompts
+    max-width: 450px;
   }
 
-  // 2. The Title (Neon Accent)
   .mat-mdc-dialog-title {
     font-size: 1.8rem !important;
     font-weight: 800 !important;
@@ -24,23 +21,20 @@
     text-align: center;
   }
 
-  // 3. The Message Text
   .mat-mdc-dialog-content {
     color: rgba(255, 255, 255, 0.85) !important;
     font-size: 1.1rem !important;
     line-height: 1.6;
     text-align: center;
     padding: 10px 0 30px 0 !important;
-    border: none !important; // Removes the default material separator lines
+    border: none !important;
   }
 
-  // 4. Action Buttons
   .mat-mdc-dialog-actions {
-    justify-content: center !important; // Center buttons for better focus
+    justify-content: center !important;
     gap: 20px;
     padding: 0 !important;
 
-    // Cancel Button (The "mat-button")
     .mdc-button {
       color: #94a3b8 !important;
       font-weight: 600;
@@ -51,14 +45,11 @@
       }
     }
 
-    // Confirm Button (The "mat-raised-button")
     .mat-mdc-raised-button {
-      // If the color passed is primary, apply our custom gradient
       &.mat-primary {
         background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
       }
       
-      // If the color passed is warn (for deletions), apply a red gradient
       &.mat-warn {
         background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
       }

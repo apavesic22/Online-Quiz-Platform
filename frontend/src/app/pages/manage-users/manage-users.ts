@@ -90,8 +90,8 @@ ngOnInit() {
 
     this.http.get<any>(url).subscribe({
       next: (res) => {
-        this.users = res.data; // Assign from 'data' property
-        this.totalUsers = res.total; // Update total count for paginator
+        this.users = res.data; 
+        this.totalUsers = res.total; 
         this.loading = false;
       },
       error: () => (this.loading = false),

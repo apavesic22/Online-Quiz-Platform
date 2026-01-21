@@ -101,32 +101,24 @@ export class CreateQuizPage implements OnInit {
       boolean_correct: [null],
     });
 
-    // CRITICAL FIX: Handle switching between Multiple Choice and True/False
     q.get('type')?.valueChanges.subscribe((type) => {
       const optionsArray = q.get('options') as FormArray;
       
       if (type === 'boolean') {
-        // 1. Boolean logic
         q.get('boolean_correct')?.setValidators([Validators.required]);
         
-        // 2. Clear Multiple Choice logic
         q.get('correct_answer_index')?.clearValidators();
         q.get('correct_answer_index')?.setValue(null);
         
-        // 3. REMOVE Validators from the 4 input fields
         optionsArray.controls.forEach(control => {
           control.clearValidators();
           control.updateValueAndValidity();
         });
       } else {
-        // 1. Multiple Choice logic
         q.get('correct_answer_index')?.setValidators([Validators.required]);
-        
-        // 2. Clear Boolean logic
         q.get('boolean_correct')?.clearValidators();
         q.get('boolean_correct')?.setValue(null);
         
-        // 3. RESTORE Validators to the 4 input fields
         optionsArray.controls.forEach(control => {
           control.setValidators([Validators.required]);
           control.updateValueAndValidity();

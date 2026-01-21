@@ -35,7 +35,7 @@ export class App implements OnInit {
   title = 'Quizify';
   user: User | null = null;
   loading = true;
-  isLoggedIn = false; // Added property to track login state explicitly
+  isLoggedIn = false;
 
   constructor(
     private authService: AuthService,
@@ -72,7 +72,7 @@ openSuggestionDialog() {
   dialogRef.afterClosed().subscribe((result) => {
     if (result && this.user) {
       const payload = {
-        user_id: this.user.user_id, // Link to the logged-in user
+        user_id: this.user.user_id,
         title: result.title,
         description: result.description
       };

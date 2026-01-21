@@ -21,7 +21,7 @@ import { MatIconModule } from '@angular/material/icon';
 export class ManageCategoriesPage implements OnInit {
   categories: any[] = [];
   displayedColumns = ['id', 'name', 'actions'];
-  loading = false; // Added missing property
+  loading = false; 
 
   constructor(
     private http: HttpClient, 
@@ -32,7 +32,7 @@ export class ManageCategoriesPage implements OnInit {
   ngOnInit() { this.load(); }
 
   load() {
-    this.loading = true; // Set loading to true
+    this.loading = true; 
     this.http.get<any[]>('/api/categories').subscribe({
       next: (data) => {
         this.categories = data;
@@ -58,7 +58,6 @@ export class ManageCategoriesPage implements OnInit {
     });
   }
 
-  // Renamed or ensured these match the HTML calls if you prefer
   openEditDialog(category: any) {
     const dialogRef = this.dialog.open(CategoryDialogComponent, {
       width: '350px',

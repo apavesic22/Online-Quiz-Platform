@@ -1,5 +1,3 @@
-// profile.scss
-
 .profile-container {
   display: flex;
   justify-content: center;
@@ -9,7 +7,7 @@
   .profile-card {
     max-width: 500px;
     width: 100%;
-    background: rgba(30, 41, 59, 0.45) !important; // Translucent navy
+    background: rgba(30, 41, 59, 0.45) !important;
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 32px !important;
@@ -88,7 +86,7 @@
             font-size: 28px;
             width: 28px;
             height: 28px;
-            color: #8b5cf6 !important; // Purple accent
+            color: #8b5cf6 !important;
             filter: drop-shadow(0 0 5px rgba(139, 92, 246, 0.4));
           }
 
@@ -112,7 +110,7 @@
             }
 
             .verified-text {
-              color: #10b981; // Emerald Green
+              color: #10b981;
               font-weight: 800;
               display: flex;
               align-items: center;

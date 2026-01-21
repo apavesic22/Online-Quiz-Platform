@@ -28,7 +28,6 @@ questionsRouter.put("/:questionId", async (req, res) => {
     const { question_type_id, question_text, position, time_limit, answers } =
       req.body;
 
-    // ---- fetch question + quiz owner ----
     const question = await db.connection.get<{
       question_id: number;
       quiz_id: number;
@@ -54,7 +53,6 @@ questionsRouter.put("/:questionId", async (req, res) => {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    // ---- nothing to update ----
     if (
       question_type_id === undefined &&
       question_text === undefined &&
@@ -65,7 +63,6 @@ questionsRouter.put("/:questionId", async (req, res) => {
       return res.status(204).send();
     }
 
-    // ---- update question fields ----
     const updates: string[] = [];
     const values: any[] = [];
 
@@ -97,7 +94,6 @@ questionsRouter.put("/:questionId", async (req, res) => {
       );
     }
 
-    // ---- update answers if provided ----
     if (Array.isArray(answers)) {
       if (!answers.some((a) => a.is_correct === true)) {
         return res
@@ -143,7 +139,6 @@ questionsRouter.delete("/:questionId", async (req, res) => {
 
     const user = req.user as User;
 
-    // ---- fetch question + quiz owner ----
     const question = await db.connection.get<{
       question_id: number;
       quiz_id: number;
@@ -169,7 +164,6 @@ questionsRouter.delete("/:questionId", async (req, res) => {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    // ---- delete dependent data ----
     await db.connection.run(
       `DELETE FROM ATTEMPT_ANSWERS WHERE question_id = ?`,
       [questionId]

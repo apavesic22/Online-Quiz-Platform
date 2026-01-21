@@ -1,5 +1,3 @@
-// leaderboard.scss
-
 .leaderboard-wrapper {
   padding: 40px 20px;
   display: flex;
@@ -9,7 +7,7 @@
 
 .leaderboard-card {
   width: 100%;
-  max-width: 800px; // Wider for a more professional feel
+  max-width: 800px; 
   background: rgba(15, 23, 42, 0.9) !important;
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -20,7 +18,7 @@
   mat-card-header {
     margin-bottom: 30px;
     text-align: center;
-    display: block; // Ensures centering works
+    display: block;
 
     .mat-card-title {
       font-size: 2.4rem;
@@ -42,12 +40,11 @@
   }
 }
 
-// 1. THE TABLE STYLING
 table {
   width: 100%;
   background: transparent !important;
   border-collapse: separate;
-  border-spacing: 0 8px; // Creates the "row" effect
+  border-spacing: 0 8px; 
 
   th.mat-mdc-header-cell {
     color: #94a3b8 !important;
@@ -79,29 +76,24 @@ table {
   }
 }
 
-// 2. RANK BADGES (Gold, Silver, Bronze)
 .top-rank {
   font-weight: 900;
   font-size: 1.1rem;
   
-  // Rank #1: Gold Glow
   &.rank-1 {
     color: #fbbf24 !important;
     text-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
   }
-  // Rank #2: Silver Glow
   &.rank-2 {
     color: #94a3b8 !important;
     text-shadow: 0 0 12px rgba(148, 163, 184, 0.5);
   }
-  // Rank #3: Bronze Glow
   &.rank-3 {
     color: #d97706 !important;
     text-shadow: 0 0 12px rgba(217, 119, 6, 0.5);
   }
 }
 
-// 3. USER HIGHLIGHT & BADGES
 .highlight-me td {
   background: rgba(6, 182, 212, 0.15) !important;
   border-top: 1px solid rgba(6, 182, 212, 0.3);
@@ -145,7 +137,6 @@ table {
   }
 }
 
-// Roles
 .admin-icon, .manager-icon, .verified-icon {
   vertical-align: middle;
   margin-left: 5px;
