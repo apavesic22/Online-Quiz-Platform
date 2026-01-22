@@ -1,0 +1,121 @@
+.arch-container {
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+
+  .section-title {
+    text-align: center;
+    font-size: 2.5rem;
+    color: white;
+    margin-bottom: 40px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    align-items: stretch;
+
+    .arch-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      color: white;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      }
+
+      mat-card-header {
+        margin-bottom: 15px;
+
+        mat-icon[mat-card-avatar] {
+          background-color: rgba(255, 255, 255, 0.2);
+          padding: 8px;
+          border-radius: 50%;
+          color: #00d2ff;
+        }
+
+        mat-card-title {
+          font-weight: bold;
+          letter-spacing: 1px;
+        }
+
+        mat-card-subtitle {
+          color: rgba(255, 255, 255, 0.7);
+        }
+      }
+
+      mat-card-content {
+        ul {
+          padding-left: 20px;
+          li {
+            margin-bottom: 12px;
+            line-height: 1.5;
+
+            strong {
+              color: #3a7bd5;
+            }
+
+            code {
+              background: rgba(0, 0, 0, 0.3);
+              padding: 2px 6px;
+              border-radius: 4px;
+              font-family: monospace;
+              color: #ff9d00;
+            }
+          }
+        }
+      }
+    }
+
+    .integration-card {
+      grid-column: 1 / -1;
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 20px;
+      color: white;
+
+      h3 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        color: #00d2ff;
+
+        mat-icon {
+          font-size: 28px;
+          height: 28px;
+          width: 28px;
+        }
+      }
+
+      .integration-content {
+        .point {
+          padding: 15px 0;
+          line-height: 1.6;
+
+          strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #3a7bd5;
+            font-size: 1.1rem;
+          }
+        }
+
+        mat-divider {
+          border-top-color: rgba(255, 255, 255, 0.1);
+        }
+      }
+    }
+  }
+}
+

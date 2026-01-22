@@ -1,0 +1,91 @@
+<div class="arch-container">
+  <h2 class="section-title">System Architecture</h2>
+
+  <div class="tech-grid">
+    <mat-card class="arch-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>important_devices</mat-icon>
+        <mat-card-title>Presentation Layer</mat-card-title>
+        <mat-card-subtitle>Angular 18 SPA</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <ul>
+          <li>
+            <strong>Role-Based UI:</strong> Views filtered based on
+            <code>user.role_id</code>.
+          </li>
+          <li>
+            <strong>Routing:</strong> Managed via
+            <code>HashLocationStrategy</code> for server compatibility.
+          </li>
+          <li>
+            <strong>Styling:</strong> Material Design with a "Glassmorphism"
+            theme.
+          </li>
+        </ul>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="arch-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>dns</mat-icon>
+        <mat-card-title>Logic Layer</mat-card-title>
+        <mat-card-subtitle>Node.js & Express</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <ul>
+          <li>
+            <strong>REST API:</strong> Modular routing for Quizzes, Users, and
+            Stats.
+          </li>
+          <li>
+            <strong>Security:</strong> Middleware-based authentication and
+            Bcrypt hashing.
+          </li>
+          <li>
+            <strong>Validation:</strong> Server-side integrity checks on all
+            <code>POST/PUT</code> data.
+          </li>
+        </ul>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="arch-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>storage</mat-icon>
+        <mat-card-title>Data Layer</mat-card-title>
+        <mat-card-subtitle>SQLite3</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <ul>
+          <li>
+            <strong>Relational DB:</strong> Structured tables with Foreign Key
+            constraints.
+          </li>
+          <li>
+            <strong>Persistence:</strong> Local <code>.sqlite</code> file for
+            easy deployment on Spider.
+          </li>
+        </ul>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="integration-card">
+      <h3><mat-icon>sync_alt</mat-icon> Integration Points</h3>
+      <div class="integration-content">
+        <div class="point">
+          <strong>FE-BE Connection:</strong>
+          The Angular <code>HttpClient</code> performs asynchronous REST calls.
+          Authentication state is maintained via session cookies across all
+          requests.
+        </div>
+        <mat-divider></mat-divider>
+        <div class="point">
+          <strong>BE-DB Connection:</strong>
+          The Express server uses a dedicated database service to execute SQL
+          queries. Business logic (like score calculation) is performed here
+          before database entry.
+        </div>
+      </div>
+    </mat-card>
+  </div>
+</div>
