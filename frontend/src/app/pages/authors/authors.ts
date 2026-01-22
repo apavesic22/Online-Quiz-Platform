@@ -42,6 +42,11 @@ export class AuthorsComponent {
     panelClass: 'full-screen-modal' 
   });
 }
+
+openEvaluationPdf() {
+    const backendUrl = 'http://localhost:4200/api/reports/evaluation-report';
+    window.open(backendUrl, '_blank');
+  }
 }
 
 @Component({

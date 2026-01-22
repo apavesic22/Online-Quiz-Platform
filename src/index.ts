@@ -11,6 +11,7 @@ import { categoriesRouter } from "./api/categories";
 import { suggestionsRouter } from "./api/suggestions";
 import { difficultiesRouter } from "./api/difficulties";
 import { statsRouter } from "./api/statistics";
+import { reportsRouter } from "./api/reports";
 
 config({ quiet: true });
 
@@ -43,6 +44,7 @@ async function main() {
   app.use(apiUrl + "/suggestions", suggestionsRouter);
   app.use(apiUrl + "/difficulties", difficultiesRouter);
   app.use(apiUrl + "/statistics", statsRouter);
+  app.use(apiUrl + "/reports", reportsRouter);
 
   app.use(errorHandler);
 

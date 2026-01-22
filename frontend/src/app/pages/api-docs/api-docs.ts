@@ -166,5 +166,11 @@ export class ApiDocsComponent {
       path: '/api/auth/',
       desc: 'Logs out the user',
     },
+    //--- Reports API ---
+    {
+      method: 'GET',
+      path: '/api/reports/evaluation-report',
+      desc: 'Generates and returns the project evaluation PDF report.',
+    },
   ];
 }
