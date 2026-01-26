@@ -25,10 +25,10 @@ export class AuthorsComponent {
   roman = {
     name: 'Roman',
     surname: 'Protsak',
-    profession: 'Your profession here',
-    location: 'Your location here',
-    email: 'Your email here',
-    imageUrl: 'Your image URL here'
+    profession: 'Student at UL/FMCS (0016201403)',
+    location: 'Łódź, Poland',
+    email: 'UL0297640@edu.uni.lodz.pl',
+    imageUrl: '../../../../../uploads/Roman.jpg'
   }
 
   constructor(private dialog: MatDialog) {}
@@ -36,10 +36,10 @@ export class AuthorsComponent {
   openDiagram() {
   this.dialog.open(DiagramModalComponent, {
     data: { imageSrc: '../../../../../uploads/ERdiagram.svg' },
-    width: '98vw',        
-    maxWidth: '98vw',    
-    height: '90vh',      
-    panelClass: 'full-screen-modal' 
+    width: '98vw',
+    maxWidth: '98vw',
+    height: '90vh',
+    panelClass: 'full-screen-modal'
   });
 }
 
