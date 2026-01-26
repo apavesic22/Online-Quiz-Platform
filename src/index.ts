@@ -58,7 +58,7 @@ async function main() {
   app.get("*", (req, res) => {
     res.sendFile(path.join(frontendPath, "index.html"));
   });
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 12159;
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
   });
