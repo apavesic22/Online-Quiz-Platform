@@ -19,7 +19,13 @@ const app = express();
 
 app.use(morgan(process.env.MORGANTYPE || "tiny"));
 
-const frontendPath = path.join(process.cwd(), 'frontend', 'dist', 'frontend', 'browser');
+const frontendPath = path.join(
+  process.cwd(),
+  "frontend",
+  "dist",
+  "frontend",
+  "browser",
+);
 console.log("Serving frontend from: ", frontendPath);
 
 app.use(express.static(frontendPath));
@@ -48,7 +54,10 @@ async function main() {
 
   app.use(errorHandler);
 
-  app.get("../")
+  app.get("../");
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(frontendPath, "index.html"));
+  });
   const port = process.env.PORT || 3000;
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
