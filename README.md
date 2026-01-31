@@ -1,5 +1,7 @@
 # Web Application Development
 This is a repository made for the purposes of the project on the Web application development course since this project is done in teams. The main goal was to create a web application on which users can play quizzes using Angular, typescript, HTML and SCSS. Instructions for the use of the application are written below. If you want to test the application and its features here is the log in data you should use. 
+<br><br>
+Also to start the application locally you should have 2 terminals open while one is positioned in root folder and one is in frontend/ folder. After you position yourself there execute "npm run dev" in both terminals and your application should be served on localhost. 
 ## Admin
 Username: admin <br>
 Password: Admin123 <br>
