@@ -1,20 +1,20 @@
 # Web Application Development
 This is a repository made for the purposes of the project on the Web application development course since this project is done in teams. The main goal was to create a web application on which users can play quizzes using Angular, typescript, HTML and SCSS. Instructions for the use of the application are written below. If you want to test the application and its features here is the log in data you should use. 
 ## Admin
-Username: admin
-Password: Admin123
+Username: admin <br>
+Password: Admin123 <br>
 
 ## Manager
-Username: manager
-Password: Manager123
+Username: manager <br>
+Password: Manager123<br>
 
 ## Verified user
-Username: verified
-Password: Verified123
+Username: verified<br>
+Password: Verified123<br>
 
 ## Standard user
-Username: standard
-Password: Standard123
+Username: standard<br>
+Password: Standard123<br>
 
 #### Install Angular (v20) tools
 ```bash
